@@ -1,10 +1,10 @@
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
-python-multipart==0.0.12
+python-multipart==0.0.18
 Pillow==10.4.0
-torch==2.5.1
-torchvision==0.20.1
-transformers==4.46.3
+torch==2.6.0
+torchvision==0.21.0
+transformers==4.48.0
 diffusers==0.31.0
 accelerate==1.1.1
 numpy==1.26.4

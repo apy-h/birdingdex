@@ -21,10 +21,11 @@ A full-stack web application that combines the fun of Pokédex with bird watchin
 
 **Dependencies**: `backend/requirements.txt`
 - FastAPI 0.115.0
-- PyTorch 2.5.1
-- Transformers 4.46.3
+- PyTorch 2.6.0 (security patch)
+- Transformers 4.48.0 (security patch)
 - Diffusers 0.31.0
-- Pillow for image processing
+- python-multipart 0.0.18 (security patch)
+- Pillow 10.4.0
 
 ### Frontend (React + TypeScript)
 **File**: `frontend/src/App.tsx`

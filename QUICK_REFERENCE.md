@@ -202,7 +202,9 @@ Works without downloading large ML models!
 
 - FastAPI: 0.115.0
 - React: 18.3.1
-- PyTorch: 2.5.1
+- PyTorch: 2.6.0
+- Transformers: 4.48.0
+- python-multipart: 0.0.18
 - TypeScript: 5.6.3
 - Vite: 5.4.11
 
