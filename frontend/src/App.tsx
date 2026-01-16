@@ -1,13 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import ImageUpload from './components/ImageUpload';
 import BirdCard from './components/BirdCard';
 import CollectionProgress from './components/CollectionProgress';
 import { Bird } from './types';
+import { api } from './api';
 
 const App: React.FC = () => {
   const [discoveredBirds, setDiscoveredBirds] = useState<Bird[]>([]);
   const [currentBird, setCurrentBird] = useState<Bird | null>(null);
+  const [totalSpecies, setTotalSpecies] = useState<number>(25);
+
+  useEffect(() => {
+    // Fetch total species count on mount
+    const fetchSpeciesCount = async () => {
+      try {
+        const species = await api.getSpeciesList();
+        setTotalSpecies(species.length);
+      } catch (error) {
+        console.error('Failed to fetch species count:', error);
+      }
+    };
+    fetchSpeciesCount();
+  }, []);
 
   const handleBirdDiscovered = (bird: Bird) => {
     setCurrentBird(bird);
@@ -41,7 +56,7 @@ const App: React.FC = () => {
         <div className="collection-section">
           <CollectionProgress 
             discoveredBirds={discoveredBirds}
-            totalSpecies={25}
+            totalSpecies={totalSpecies}
           />
         </div>
 
