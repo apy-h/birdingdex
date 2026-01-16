@@ -1,0 +1,193 @@
+.bird-card {
+  background-color: var(--card-background);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.bird-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.bird-card.compact {
+  max-width: 250px;
+}
+
+.bird-image-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+.bird-card.compact .bird-image-container {
+  height: 200px;
+}
+
+.bird-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.confidence-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: var(--success-color);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.bird-info {
+  padding: 1.5rem;
+}
+
+.bird-card.compact .bird-info {
+  padding: 1rem;
+}
+
+.bird-species {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.bird-card.compact .bird-species {
+  font-size: 1.2rem;
+  margin-bottom: 0;
+}
+
+.predictions {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: var(--background-color);
+  border-radius: 8px;
+}
+
+.predictions h4 {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.predictions ul {
+  list-style: none;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.predictions li {
+  padding: 0.25rem 0;
+}
+
+.augmentation-controls {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.augmentation-controls h4 {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.augment-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.augment-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 0.75rem 1rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.augment-btn:hover:not(:disabled) {
+  background-color: #357abd;
+  transform: scale(1.05);
+}
+
+.augment-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: var(--secondary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background-color: #e67e22;
+}
+
+.augmenting-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.augmenting-overlay .spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.augmenting-overlay p {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .augment-buttons {
+    flex-direction: column;
+  }
+
+  .augment-btn {
+    width: 100%;
+  }
+}
