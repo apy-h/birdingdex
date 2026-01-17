@@ -49,7 +49,10 @@ class BirdClassifier:
             # Use latest timestamped model if available, otherwise fall back to non-timestamped
             if timestamped_models:
                 timestamped_models.sort(reverse=True)  # Sort descending to get latest first
-                model_path = os.path.join(models_dir, timestamped_models[0], 'bird_classifier')
+                # Try direct path first (new structure), then subdirectory (old structure)
+                model_path = os.path.join(models_dir, timestamped_models[0])
+                if not os.path.exists(os.path.join(model_path, 'config.json')):
+                    model_path = os.path.join(models_dir, timestamped_models[0], 'bird_classifier')
                 print(f"Found timestamped model: {timestamped_models[0]}")
             else:
                 # Backward compatibility: fall back to non-timestamped location
@@ -64,7 +67,7 @@ class BirdClassifier:
         try:
             if os.path.exists(model_path):
                 print(f"Loading fine-tuned model from {model_path}")
-                self.processor = AutoImageProcessor.from_pretrained(model_path)
+                self.processor = AutoImageProcessor.from_pretrained(model_path, use_fast=True)
                 self.model = AutoModelForImageClassification.from_pretrained(model_path)
                 self.model.to(self.device)
                 self.model.eval()
@@ -82,10 +85,10 @@ class BirdClassifier:
             print(f"Warning: Failed to load fine-tuned model: {e}")
 
             model_name = "google/vit-base-patch16-224"
-            print("Falling back to base model {model_name}")
+            print(f"Falling back to base model {model_name}")
 
             try:
-                self.processor = AutoImageProcessor.from_pretrained(model_name)
+                self.processor = AutoImageProcessor.from_pretrained(model_name, use_fast=True)
                 self.model = AutoModelForImageClassification.from_pretrained(model_name)
                 self.model.to(self.device)
                 self.model.eval()

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bird } from '../types';
+import { Bird, cleanBirdName } from '../types';
 import { api } from '../api';
 import './BirdCard.css';
 
@@ -42,15 +42,15 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false }) => {
       </div>
 
       <div className="bird-info">
-        <h3 className="bird-species">{bird.species}</h3>
-        
+        <h3 className="bird-species">{cleanBirdName(bird.species)}</h3>
+
         {!compact && bird.topPredictions && (
           <div className="predictions">
             <h4>Top Predictions:</h4>
             <ul>
               {bird.topPredictions.slice(0, 3).map((pred, index) => (
                 <li key={index}>
-                  {pred.species}: {(pred.confidence * 100).toFixed(1)}%
+                  {cleanBirdName(pred.species)}: {(pred.confidence * 100).toFixed(1)}%
                 </li>
               ))}
             </ul>
@@ -61,22 +61,22 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false }) => {
           <div className="augmentation-controls">
             <h4>Add Accessories:</h4>
             <div className="augment-buttons">
-              <button 
-                onClick={() => handleAugment('hat')} 
+              <button
+                onClick={() => handleAugment('hat')}
                 disabled={isAugmenting}
                 className="augment-btn"
               >
                 🎩 Hat
               </button>
-              <button 
-                onClick={() => handleAugment('bowtie')} 
+              <button
+                onClick={() => handleAugment('bowtie')}
                 disabled={isAugmenting}
                 className="augment-btn"
               >
                 🎀 Bowtie
               </button>
-              <button 
-                onClick={() => handleAugment('glasses')} 
+              <button
+                onClick={() => handleAugment('glasses')}
                 disabled={isAugmenting}
                 className="augment-btn"
               >
@@ -84,7 +84,7 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false }) => {
               </button>
             </div>
             {augmentedImage && (
-              <button 
+              <button
                 onClick={() => setShowAugmented(!showAugmented)}
                 className="toggle-btn"
               >
