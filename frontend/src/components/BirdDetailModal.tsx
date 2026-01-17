@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bird, BirdImage, cleanBirdName } from '../types';
+import { Bird, cleanBirdName } from '../types';
 import './BirdDetailModal.css';
 
 interface BirdDetailModalProps {

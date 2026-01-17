@@ -5,7 +5,7 @@ import BirdCard from './components/BirdCard';
 import BirdDetailModal from './components/BirdDetailModal';
 import CollectionProgress from './components/CollectionProgress';
 import ModelStats from './components/ModelStats';
-import { Bird, BirdImage } from './types';
+import { Bird } from './types';
 import { api } from './api';
 
 type Page = 'home' | 'stats';
@@ -87,7 +87,7 @@ const App: React.FC = () => {
 
   const handleAugmentImage = (augmentedImageUrl: string) => {
     // Add augmented image to the current bird's latest image
-    if (currentBird) {
+    if (currentBird && currentBird.images) {
       setDiscoveredBirds(prev => {
         const updated = prev.map(bird => {
           if (bird.species === currentBird.species && bird.images) {
