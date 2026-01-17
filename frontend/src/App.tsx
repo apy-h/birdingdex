@@ -93,7 +93,7 @@ const App: React.FC = () => {
           if (bird.species === currentBird.species && bird.images) {
             // Create a new images array to avoid mutation
             const newImages = bird.images.map((img, idx) => {
-              if (idx === bird.images.length - 1) {
+              if (idx === (bird.images?.length ?? 0) - 1) {
                 // Last image - add augmented image
                 return {
                   ...img,
