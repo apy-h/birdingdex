@@ -296,14 +296,14 @@ class ImageAugmenter:
                 print(f"✓ Created mask: {mask.size}")
 
                 try:
-                    print(f"Starting inference with {25} steps...")
+                    print(f"Starting inference with 10 steps...")
                     # Generate inpainted image
                     with torch.no_grad():
                         result = self.pipeline(
                             prompt=prompt,
                             image=image_resized,
                             mask_image=mask,
-                            num_inference_steps=25,
+                            num_inference_steps=10,
                             guidance_scale=7.5,
                             height=512,
                             width=512,

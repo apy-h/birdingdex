@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [selectedBirdForModal, setSelectedBirdForModal] = useState<Bird | null>(null);
   const [totalSpecies, setTotalSpecies] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [isAugmenting, setIsAugmenting] = useState(false);
 
   useEffect(() => {
     // Fetch total species count on mount
@@ -43,29 +44,28 @@ const App: React.FC = () => {
         const existingBird = updated[existingIndex];
 
         // Initialize images array if needed
-        if (!existingBird.images) {
-          existingBird.images = [{
-            imageUrl: existingBird.imageUrl,
-            confidence: existingBird.confidence,
-            topPredictions: existingBird.topPredictions,
-            augmentedImages: []
-          }];
-        }
+        const existingImages = existingBird.images || [{
+          imageUrl: existingBird.imageUrl,
+          confidence: existingBird.confidence,
+          topPredictions: existingBird.topPredictions,
+          augmentedImages: []
+        }];
 
-        // Add new image
-        existingBird.images.push({
+        // Create new images array with the new image added
+        const newImages = [...existingImages, {
           imageUrl: bird.imageUrl,
           confidence: bird.confidence,
           topPredictions: bird.topPredictions,
           augmentedImages: []
-        });
+        }];
 
-        // Update main bird info to latest
+        // Update existing bird with new image and latest info
         updated[existingIndex] = {
           ...existingBird,
           imageUrl: bird.imageUrl,
           confidence: bird.confidence,
-          topPredictions: bird.topPredictions
+          topPredictions: bird.topPredictions,
+          images: newImages
         };
 
         return updated;
@@ -91,11 +91,18 @@ const App: React.FC = () => {
       setDiscoveredBirds(prev => {
         const updated = prev.map(bird => {
           if (bird.species === currentBird.species && bird.images) {
-            const lastIndex = bird.images.length - 1;
-            if (!bird.images[lastIndex].augmentedImages) {
-              bird.images[lastIndex].augmentedImages = [];
-            }
-            bird.images[lastIndex].augmentedImages!.push(augmentedImageUrl);
+            // Create a new images array to avoid mutation
+            const newImages = bird.images.map((img, idx) => {
+              if (idx === bird.images.length - 1) {
+                // Last image - add augmented image
+                return {
+                  ...img,
+                  augmentedImages: [...(img.augmentedImages || []), augmentedImageUrl]
+                };
+              }
+              return img;
+            });
+            return { ...bird, images: newImages };
           }
           return bird;
         });
@@ -152,7 +159,7 @@ const App: React.FC = () => {
         {currentPage === 'home' ? (
           <>
             <div className="upload-section">
-              <ImageUpload onBirdDiscovered={handleBirdDiscovered} />
+              <ImageUpload onBirdDiscovered={handleBirdDiscovered} isAugmenting={isAugmenting} />
             </div>
 
             {currentBird && (
@@ -161,6 +168,7 @@ const App: React.FC = () => {
                 <BirdCard
                   bird={currentBird}
                   onAugmented={handleAugmentImage}
+                  onAugmentingStateChange={setIsAugmenting}
                 />
               </div>
             )}
@@ -183,6 +191,7 @@ const App: React.FC = () => {
                       compact
                       onCompactCardClick={() => openBirdDetail(bird)}
                       onAugmented={handleAugmentImage}
+                      onAugmentingStateChange={setIsAugmenting}
                     />
                   ))}
                 </div>

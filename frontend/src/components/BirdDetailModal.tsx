@@ -51,19 +51,65 @@ const BirdDetailModal: React.FC<BirdDetailModalProps> = ({ bird, isOpen, onClose
         </div>
 
         <div className="modal-body">
+          <div className="modal-left-section">
+            <div className="modal-predictions-section">
+              <h3>Top Predictions</h3>
+              {currentBirdImage.topPredictions && currentBirdImage.topPredictions.length > 0 ? (
+                <div className="predictions-list">
+                  {currentBirdImage.topPredictions.slice(0, 3).map((pred, index) => (
+                    <div key={index} className="prediction-item">
+                      <span className="pred-species">{cleanBirdName(pred.species)}</span>
+                      <span className="pred-confidence">{(pred.confidence * 100).toFixed(1)}%</span>
+                      <div className="pred-bar">
+                        <div
+                          className="pred-fill"
+                          style={{ width: `${pred.confidence * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-predictions">No predictions available</p>
+              )}
+            </div>
+
+            {images.length > 1 && (
+              <div className="modal-sightings-section">
+                <h3>Sightings</h3>
+                <div className="image-thumbnails-grid">
+                  {images.map((img, index) => (
+                    <button
+                      key={index}
+                      className={`thumbnail ${index === currentImageIndex ? 'active' : ''}`}
+                      onClick={() => {
+                        setCurrentImageIndex(index);
+                      }}
+                      title={`Sighting ${index + 1}`}
+                    >
+                      <img src={img.imageUrl} alt={`${bird.species} ${index + 1}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="modal-image-section">
             <div className="modal-image-container">
               <img src={displayImage} alt={bird.species} className="modal-bird-image" />
             </div>
 
-            <div className="slideshow-controls">
-              <button onClick={goToPrevious} className="nav-btn prev-btn">
-                ← Previous
-              </button>
-              <button onClick={goToNext} className="nav-btn next-btn">
-                Next →
-              </button>
-            </div>
+            {images.length > 1 && (
+              <div className="slideshow-controls">
+                <button onClick={goToPrevious} className="nav-btn prev-btn">
+                  ← Previous
+                </button>
+                <button onClick={goToNext} className="nav-btn next-btn">
+                  Next →
+                </button>
+              </div>
+            )}
 
             {hasAugmentedImages && (
               <button
@@ -78,46 +124,9 @@ const BirdDetailModal: React.FC<BirdDetailModalProps> = ({ bird, isOpen, onClose
               Confidence: {(currentBirdImage.confidence * 100).toFixed(1)}%
             </p>
           </div>
-
-          <div className="modal-predictions-section">
-            <h3>Top Predictions</h3>
-            {currentBirdImage.topPredictions && currentBirdImage.topPredictions.length > 0 ? (
-              <div className="predictions-list">
-                {currentBirdImage.topPredictions.slice(0, 3).map((pred, index) => (
-                  <div key={index} className="prediction-item">
-                    <span className="pred-species">{cleanBirdName(pred.species)}</span>
-                    <span className="pred-confidence">{(pred.confidence * 100).toFixed(1)}%</span>
-                    <div className="pred-bar">
-                      <div
-                        className="pred-fill"
-                        style={{ width: `${pred.confidence * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="no-predictions">No predictions available</p>
-            )}
-          </div>
         </div>
 
         <div className="modal-footer">
-          <p className="thumbnail-label">Sightings</p>
-          <div className="image-thumbnails">
-            {images.map((img, index) => (
-              <button
-                key={index}
-                className={`thumbnail ${index === currentImageIndex ? 'active' : ''}`}
-                onClick={() => {
-                  setCurrentImageIndex(index);
-                }}
-                title={`Image ${index + 1}`}
-              >
-                <img src={img.imageUrl} alt={`${bird.species} ${index + 1}`} />
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </div>

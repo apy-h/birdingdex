@@ -68,10 +68,17 @@
 
 .modal-body {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.2fr;
   gap: 30px;
   padding: 30px;
   flex: 1;
+}
+
+.modal-left-section {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  overflow-y: auto;
 }
 
 .modal-image-section {
@@ -149,6 +156,18 @@
   gap: 15px;
 }
 
+.modal-sightings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-sightings-section h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--primary-color, #2c3e50);
+}
+
 .modal-predictions-section h3 {
   margin: 0;
   font-size: 18px;
@@ -203,33 +222,23 @@
 }
 
 .modal-footer {
-  padding: 20px 30px;
+  padding: 15px 30px;
   border-top: 1px solid #eee;
   background-color: #fafafa;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
 }
 
-.thumbnail-label {
-  margin: 0 0 12px 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: #999;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.image-thumbnails {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 5px;
+.image-thumbnails-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
 }
 
 .thumbnail {
   flex-shrink: 0;
-  width: 60px;
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border: 2px solid transparent;
   border-radius: 6px;
   padding: 0;
@@ -259,6 +268,20 @@
     grid-template-columns: 1fr;
     gap: 20px;
     padding: 20px;
+  }
+
+  .modal-left-section {
+    gap: 20px;
+  }
+
+  .image-thumbnails-grid {
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 6px;
+  }
+
+  .thumbnail {
+    width: 60px;
+    height: 60px;
   }
 
   .modal-header {

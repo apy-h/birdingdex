@@ -8,15 +8,17 @@ interface BirdCardProps {
   compact?: boolean;
   onCompactCardClick?: () => void;
   onAugmented?: (augmentedImageUrl: string) => void;
+  onAugmentingStateChange?: (isAugmenting: boolean) => void;
 }
 
-const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCardClick, onAugmented }) => {
+const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCardClick, onAugmented, onAugmentingStateChange }) => {
   const [isAugmenting, setIsAugmenting] = useState(false);
   const [showAugmented, setShowAugmented] = useState(false);
   const [augmentedImage, setAugmentedImage] = useState<string | null>(null);
 
   const handleAugment = async (editType: string) => {
     setIsAugmenting(true);
+    onAugmentingStateChange?.(true);
     try {
       // Extract base64 from data URL
       const base64 = bird.imageUrl.split(',')[1];
@@ -32,6 +34,7 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCar
       console.error('Augmentation error:', err);
     } finally {
       setIsAugmenting(false);
+      onAugmentingStateChange?.(false);
     }
   };
 
