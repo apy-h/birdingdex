@@ -5,40 +5,12 @@ A Pokédex for Birds! A full-stack web application that uses AI to identify bird
 ## ✨ Features
 
 - 🤖 **AI-Powered Classification**: Upload bird photos and get instant species identification using Vision Transformer models
-- � **Fine-Tuned Model**: Train your own bird classifier on the OpenML Birds dataset (525 species)
+- 🎯 **Fine-Tuned Model**: Train your own bird classifier on the CUB-200-2011 dataset, which supports 200 bird species
 - 📊 **Model Statistics**: View detailed performance metrics, accuracy, and hyperparameters
 - 🎨 **Image Augmentation**: Add fun accessories to your bird photos (hats, bowties, glasses) using Stable Diffusion inpainting
 - 📈 **Collection Tracking**: Build your personal bird collection and track your progress
 - 🎯 **Modern UI**: Beautiful, responsive React interface with TypeScript
 - ⚡ **Fast API**: High-performance FastAPI backend with async support
-
-## 🏗️ Tech Stack
-
-### Frontend
-- **React** with TypeScript
-- **Vite** for blazing-fast development
-- **Axios** for API communication
-- Modern CSS with custom properties
-
-### Backend
-- **FastAPI** (Python) for REST APIs
-- **Uvicorn** ASGI server
-- **CORS** middleware for frontend integration
-
-### ML/AI
-- **HuggingFace Transformers** for bird classification
-- **Vision Transformer (ViT)** fine-tuned on OpenML bird dataset
-- **Stable Diffusion** via diffusers for image inpainting
-- **PyTorch** for deep learning
-- **scikit-learn** for dataset loading and metrics
-- OpenML Birds 525 Species dataset (ID: 44320)
-
-## 📋 Prerequisites
-
-- Python 3.8+ (for backend)
-- Node.js 18+ (for frontend)
-- pip (Python package manager)
-- npm or yarn (Node package manager)
 
 ## 🚀 Quick Start
 
@@ -86,26 +58,22 @@ npm run dev
 
 The frontend will be running at `http://localhost:3000`
 
-## � Fine-Tuning the Model (Optional)
+### Training the Model
 
-For best results, fine-tune the model on the OpenML bird dataset:
+By default, the app uses the pre-trained base Vision Transformer (`google/vit-base-patch16-224` from HuggingFace). To improve accuracy for all 200 bird species, you can optionally fine-tune it on the CUB-200-2011 bird dataset:
 
+**Quick test** (CPU-friendly, ~10–15 min):
 ```bash
 cd backend
-python train_model.py
+python train_model.py --epochs 1 --max-samples 20 --batch-size 4
 ```
 
-**Quick training** (for testing):
+**Standard training** (full dataset):
 ```bash
-python train_model.py --epochs 3 --max-samples 50
+python train_model.py --epochs 10 --max-samples 200 --batch-size 8
 ```
 
-**Production quality**:
-```bash
-python train_model.py --epochs 10 --max-samples 200
-```
-
-See [TRAINING_GUIDE.md](TRAINING_GUIDE.md) for detailed instructions.
+The script automatically downloads the dataset via Kaggle API or falls back to direct download. See the [Development](#-development) section for Kaggle API setup and troubleshooting.
 
 ## 🎮 Usage
 
@@ -115,6 +83,26 @@ See [TRAINING_GUIDE.md](TRAINING_GUIDE.md) for detailed instructions.
 4. **View Your Collection**: See all the birds you've discovered in your collection grid
 5. **Track Progress**: Monitor how many species you've found
 6. **Add Accessories** (optional): Click the accessory buttons to add fun cosmetic edits to your bird photos
+
+## 🏗️ Tech Stack
+
+### Frontend
+- **React** with TypeScript
+- **Vite** for blazing-fast development
+- **Axios** for API communication
+- Modern CSS with custom properties
+
+### Backend
+- **FastAPI** (Python) for REST APIs
+- **Uvicorn** ASGI server
+- **CORS** middleware for frontend integration
+
+### ML/AI
+- **HuggingFace Transformers** for bird classification
+- **Vision Transformer (ViT)** fine-tuned on CUB-200-2011 (Caltech-UCSD Birds-200-2011) bird images
+- **Stable Diffusion** via diffusers for image inpainting
+- **PyTorch** for deep learning
+- **Kaggle API** and direct download for dataset acquisition
 
 ## 🔌 API Endpoints
 
@@ -150,7 +138,6 @@ birdingdex/
 │   │   │   ├── BirdCard.tsx
 │   │   │   ├── CollectionProgress.tsx
 │   │   │   └── ModelStats.tsx
-│   │   │   └── CollectionProgress.tsx
 │   │   ├── App.tsx          # Main app component
 │   │   ├── api.ts           # API client
 │   │   ├── types.ts         # TypeScript types
@@ -164,82 +151,159 @@ birdingdex/
 
 ## 🧪 Development
 
-### Backend Development
+### Backend
+
+#### Custom Training Parameters
+
+You can customize the training process with command-line arguments:
+
 ```bash
-cd backend
-python main.py
+python train_model.py \
+  --epochs 10 \
+  --batch-size 32 \
+  --learning-rate 1e-5 \
+  --max-samples 200 \
+  --output-dir backend/models
 ```
 
-The API will auto-reload on code changes with uvicorn's auto-reload feature.
+**Available Options:**
+- `--epochs`: Number of training epochs (default: 5)
+- `--batch-size`: Batch size for training (default: 16)
+- `--learning-rate`: Learning rate (default: 2e-5)
+- `--max-samples`: Max samples per class for faster training (default: 100)
+- `--output-dir`: Directory to save the model (default: backend/models)
 
-### Frontend Development
-```bash
-cd frontend
-npm run dev
+#### Training Process
+
+##### 1. Data Preparation
+
+- Uses CUB-200-2011 bird images
+- `train_model.py` downloads via (1) Kaggle API if `KAGGLE_API_TOKEN` or `~/.kaggle/kaggle.json` is set; (2) direct download fallback (no credentials)
+- Local cache: `dataset/` (or `backend/dataset/`), gitignored
+- Balances the dataset (limits samples per class)
+- Splits into 80% training, 20% testing
+- Applies image preprocessing for Vision Transformer
+
+##### 2. Model Architecture
+
+- **Base Model**: `google/vit-base-patch16-224`
+- **Type**: Vision Transformer (ViT)
+- **Input Size**: 224x224 pixels
+- **Fine-tuning**: Transfer learning from pre-trained ImageNet weights
+
+##### 3. Training Configuration
+
+Default hyperparameters:
+- **Optimizer**: AdamW
+- **Learning Rate**: 2e-5
+- **Warmup Steps**: 100
+- **Weight Decay**: 0.01
+- **Batch Size**: 16
+- **Epochs**: 5
+
+**Common training configurations**:
+- **Quick test** (CPU-friendly): `python train_model.py --epochs 1 --max-samples 20 --batch-size 4` (~10–15 min)
+- **Standard**: `python train_model.py --epochs 5 --max-samples 100 --batch-size 16` (~30–60 min on GPU, ~2 hours on CPU)
+- **High quality**: `python train_model.py --epochs 10 --max-samples 200 --batch-size 32` (~2 hours on GPU)
+
+##### 4. Evaluation Metrics
+
+The model is evaluated on:
+- **Accuracy**
+- **Precision**
+- **Recall**
+- **F1 Score**
+- **Per-Class Accuracy**: Individual performance for each species
+
+#### Output Files
+
+After training, you'll find:
+
+##### 1. Model Directory: `backend/models/bird_classifier/`
+Contains:
+- `config.json`: Model configuration
+- `pytorch_model.bin`: Trained model weights
+- `preprocessor_config.json`: Image preprocessing configuration
+- `model.safetensors`: Safe tensors format (if available)
+
+##### 2. Metrics File: `backend/models/model_metrics.json`
+Contains:
+```json
+{
+  "model_name": "google/vit-base-patch16-224",
+  "training_date": "2026-01-16T...",
+  "num_classes": 20,
+  "num_train_samples": 800,
+  "num_test_samples": 200,
+  "hyperparameters": {
+    "num_epochs": 5,
+    "batch_size": 16,
+    "learning_rate": 2e-5,
+    ...
+  },
+  "results": {
+    "test_accuracy": 0.85,
+    "test_precision": 0.84,
+    "test_recall": 0.83,
+    "test_f1": 0.84
+  },
+  "per_class_metrics": {
+    "American Robin": {"accuracy": 0.92, "samples": 40},
+    ...
+  }
+}
 ```
 
-Vite provides hot module replacement for instant updates.
+**Environment Variables**:
+- `KAGGLE_API_TOKEN` (preferred) or `~/.kaggle/kaggle.json` for dataset download
+- `HF_HOME` optional HuggingFace cache path
+- `CUDA_VISIBLE_DEVICES` if using CUDA-capable GPU
 
-### Building for Production
+**Performance notes**:
+- GPU (NVIDIA + CUDA) provides 5–10× speedup over CPU
+- Reduce `--batch-size` or `--max-samples` if running out of memory
+- Training time grows with dataset size and epochs
 
-Frontend:
+### Frontend
+
+**Build**:
 ```bash
-cd frontend
 npm run build
 ```
+Outputs to `frontend/dist/`.
 
-The production build will be in `frontend/dist/`.
+**Environment**:
+- Set `VITE_API_URL` in frontend `.env` if backend URL differs from default
 
-## 🎯 Key Features Explained
+**UI**:
+- `ModelStats` component pulls `/api/model/metrics` to display accuracy/loss and per-class stats
 
-### Bird Classification
-- Uses pre-trained Vision Transformer models from HuggingFace
-- Provides top-5 predictions with confidence scores
-- Supports 25+ common bird species
-- Extensible to OpenML bird dataset for more species
+### Testing
 
-### Image Augmentation
-- Stable Diffusion inpainting for realistic edits
-- Pre-configured prompts for common accessories
-- Supports custom prompts
-- Demo mode with text overlays when SD models aren't loaded
+**Backend**:
+```bash
+curl http://localhost:8000/health
+curl -X POST -F "file=@test_bird.jpg" http://localhost:8000/api/classify
+curl http://localhost:8000/api/model/metrics
+```
 
-### Collection System
-- Tracks unique bird species discovered
-- Shows progress as a percentage
-- Displays collection grid with all discoveries
-- Celebration message on 100% completion
+**Frontend**: open `http://localhost:3000`, upload an image, verify classification and model stats.
 
-## 🔧 Configuration
+### Troubleshooting
 
-### Backend Configuration
-- Server runs on port 8000 by default
+- **Kaggle**: export `KAGGLE_API_TOKEN=...` or create `~/.kaggle/kaggle.json`, then rerun training
+- **Download fails**: script falls back to direct download automatically
+- **Memory issues**: reduce `--batch-size` or `--max-samples`
+- **Model not loading**: verify training completed and model exists at `backend/models/bird_classifier/`
+
+### Configuration
+
+#### Backend
+- Runs on port 8000 by default
 - CORS enabled for localhost:3000 and localhost:5173
 - Models use CUDA if available, otherwise CPU
 
-### Frontend Configuration
+#### Frontend
 - Development server on port 3000
 - API proxy configured in vite.config.ts
 - TypeScript strict mode enabled
-
-## 📝 Notes
-
-- **Demo Mode**: The application includes a demo mode that works without downloading large ML models
-- **Model Loading**: First run may take time to download HuggingFace models
-- **GPU Acceleration**: CUDA-enabled GPU recommended for faster inference
-- **Image Formats**: Supports common image formats (JPEG, PNG, WebP, etc.)
-
-## 🤝 Contributing
-
-Feel free to submit issues and enhancement requests!
-
-## 📄 License
-
-This project is open source and available for educational and demonstration purposes.
-
-## 🙏 Acknowledgments
-
-- HuggingFace for transformer models and diffusers
-- FastAPI for the excellent web framework
-- React and Vite for modern frontend development
-- OpenML for bird datasets
