@@ -69,6 +69,16 @@ def download_via_kaggle(data_dir: str, dataset_path: str) -> bool:
 
     kaggle_dataset = 'wenewone/cub2002011'
     try:
+        # Load environment variables and convert KAGGLE_API_TOKEN format if needed
+        from dotenv import load_dotenv
+        load_dotenv()
+
+        kaggle_api_token = os.getenv('KAGGLE_API_TOKEN')
+        if kaggle_api_token:
+            # Convert newer KGAT_... token format to what kaggle library expects
+            os.environ['KAGGLE_USERNAME'] = '__token__'
+            os.environ['KAGGLE_KEY'] = kaggle_api_token
+
         import kaggle  # Imported lazily to avoid hard dependency when not needed
 
         print(f"  Downloading from Kaggle: {kaggle_dataset}")
