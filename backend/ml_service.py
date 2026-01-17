@@ -4,7 +4,7 @@ Uses Vision Transformer for classification and Stable Diffusion for inpainting.
 """
 import os
 import torch
-from PIL import Image
+from PIL import Image, ImageDraw
 import io
 from typing import List, Dict, Optional
 from transformers import AutoImageProcessor, AutoModelForImageClassification
@@ -245,18 +245,24 @@ class ImageAugmenter:
         }
 
         try:
-            # TODO
-            # For demo, we'll use a lightweight approach
-            # In production, you'd use: StableDiffusionInpaintPipeline.from_pretrained()
-            self.pipeline = None
-            print("Image augmenter initialized (demo mode)")
+            # TODO: will this have to reloaded every time the app starts up???
+            print("Loading Stable Diffusion inpainting model...")
+            self.pipeline = StableDiffusionInpaintPipeline.from_pretrained(
+                "runwayml/stable-diffusion-inpainting",
+                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                safety_checker=None  # Disable safety checker for faster inference
+            )
+            self.pipeline.to(self.device)
+            self.pipeline.enable_attention_slicing()  # Reduces memory usage
+            print("✓ Stable Diffusion inpainting model loaded successfully")
         except Exception as e:
-            print(f"Warning: Failed to load inpainting model: {e}")
+            print(f"Warning: Failed to load Stable Diffusion inpainting model: {e}")
+            print("Falling back to demo mode (text overlay only)")
             self.pipeline = None
 
     def apply_edit(self, image_data: bytes, edit_type: str, custom_prompt: Optional[str] = None) -> Image.Image:
         """
-        Apply cosmetic edit to image.
+        Apply cosmetic edit to image using inpainting.
 
         Args:
             image_data: Raw image bytes
@@ -269,27 +275,50 @@ class ImageAugmenter:
         try:
             # Load image
             image = Image.open(io.BytesIO(image_data)).convert("RGB")
+            print(f"✓ Loaded image: {image.size}")
 
             if self.pipeline is not None:
                 # Real inpainting with Stable Diffusion
                 prompt = custom_prompt or self.edit_prompts.get(edit_type, f"a bird with {edit_type}")
+                print(f"Inpainting with prompt: {prompt}")
 
-                # Create a simple mask (top portion of image for accessories)
-                mask = Image.new("RGB", image.size, (255, 255, 255))
+                # Resize image to 512x512 for Stable Diffusion (must be multiple of 8)
+                image_resized = image.resize((512, 512), Image.LANCZOS)
+                print(f"✓ Resized image to: {image_resized.size}")
 
-                # Generate inpainted image
-                result = self.pipeline(
-                    prompt=prompt,
-                    image=image,
-                    mask_image=mask,
-                    num_inference_steps=20
-                ).images[0]
+                # Create a mask for the top portion of the image (for accessories like hats, crowns, etc)
+                # White (255) = inpaint, Black (0) = keep original
+                mask = Image.new("L", (512, 512), 0)  # Start with all black (keep original)
 
-                return result
+                # For accessories on top, mask the top 40% of the image
+                mask_draw = ImageDraw.Draw(mask)
+                mask_draw.rectangle([0, 0, 512, int(512 * 0.4)], fill=255)  # White for top portion
+                print(f"✓ Created mask: {mask.size}")
+
+                try:
+                    print(f"Starting inference with {25} steps...")
+                    # Generate inpainted image
+                    with torch.no_grad():
+                        result = self.pipeline(
+                            prompt=prompt,
+                            image=image_resized,
+                            mask_image=mask,
+                            num_inference_steps=25,
+                            guidance_scale=7.5,
+                            height=512,
+                            width=512,
+                        ).images[0]
+
+                    print(f"✓ Inference complete. Output size: {result.size}")
+                    return result
+                except Exception as inference_error:
+                    print(f"❌ Inference failed: {inference_error}")
+                    print(f"Image dtype: {type(image_resized)}, size: {image_resized.size}")
+                    print(f"Mask dtype: {type(mask)}, size: {mask.size}")
+                    raise
             else:
-                # TODO: make this prettier
                 # Demo mode: add text overlay to indicate edit
-                from PIL import ImageDraw, ImageFont
+                from PIL import ImageFont
 
                 result_image = image.copy()
                 draw = ImageDraw.Draw(result_image)
@@ -309,10 +338,13 @@ class ImageAugmenter:
                 padding = 10
                 draw.rectangle(
                     [x - padding, y - padding, x + text_width + padding, y + text_height + padding],
-                    fill=(255, 182, 193, 200)
+                    fill=(255, 182, 193)
                 )
                 draw.text((x, y), text, fill=(75, 0, 130))
 
                 return result_image
         except Exception as e:
+            print(f"❌ Augmentation error: {str(e)}")
+            import traceback
+            traceback.print_exc()
             raise Exception(f"Augmentation error: {str(e)}")

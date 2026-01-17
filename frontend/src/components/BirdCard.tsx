@@ -6,9 +6,11 @@ import './BirdCard.css';
 interface BirdCardProps {
   bird: Bird;
   compact?: boolean;
+  onCompactCardClick?: () => void;
+  onAugmented?: (augmentedImageUrl: string) => void;
 }
 
-const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false }) => {
+const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCardClick, onAugmented }) => {
   const [isAugmenting, setIsAugmenting] = useState(false);
   const [showAugmented, setShowAugmented] = useState(false);
   const [augmentedImage, setAugmentedImage] = useState<string | null>(null);
@@ -19,8 +21,13 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false }) => {
       // Extract base64 from data URL
       const base64 = bird.imageUrl.split(',')[1];
       const result = await api.augmentImage(base64, editType);
-      setAugmentedImage(`data:image/png;base64,${result.augmented_image}`);
+      const augmentedUrl = `data:image/png;base64,${result.augmented_image}`;
+      setAugmentedImage(augmentedUrl);
       setShowAugmented(true);
+      // Notify parent component about augmented image
+      if (onAugmented) {
+        onAugmented(augmentedUrl);
+      }
     } catch (err) {
       console.error('Augmentation error:', err);
     } finally {
@@ -28,15 +35,30 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false }) => {
     }
   };
 
+  const handleCardClick = () => {
+    if (compact && onCompactCardClick) {
+      onCompactCardClick();
+    }
+  };
+
   const displayImage = showAugmented && augmentedImage ? augmentedImage : bird.imageUrl;
 
   return (
-    <div className={`bird-card ${compact ? 'compact' : ''}`}>
+    <div
+      className={`bird-card ${compact ? 'compact' : ''} ${compact ? 'clickable' : ''}`}
+      onClick={handleCardClick}
+    >
       <div className="bird-image-container">
         <img src={displayImage} alt={bird.species} className="bird-image" />
         {!compact && (
           <div className="confidence-badge">
             {(bird.confidence * 100).toFixed(1)}% confident
+          </div>
+        )}
+        {isAugmenting && (
+          <div className="augmenting-overlay">
+            <div className="spinner"></div>
+            <p>Applying magic...</p>
           </div>
         )}
       </div>
@@ -94,13 +116,6 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false }) => {
           </div>
         )}
       </div>
-
-      {isAugmenting && (
-        <div className="augmenting-overlay">
-          <div className="spinner"></div>
-          <p>Applying magic...</p>
-        </div>
-      )}
     </div>
   );
 };

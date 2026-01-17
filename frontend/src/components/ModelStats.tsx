@@ -35,6 +35,60 @@ interface ModelMetrics {
   error?: string;
 }
 
+interface InfoItemProps {
+  label: string;
+  value: React.ReactNode;
+}
+
+interface MetricCardProps {
+  label: string;
+  value: string;
+  className: string;
+}
+
+interface ClassItemProps {
+  className: string;
+  accuracy: number;
+  samples: number;
+  isLowPerformance?: boolean;
+}
+
+// Reusable info item component
+const InfoItem: React.FC<InfoItemProps> = ({ label, value }) => (
+  <div className="info-item">
+    <span className="label">{label}:</span>
+    <span className="value">{value}</span>
+  </div>
+);
+
+// Reusable metric card component
+const MetricCard: React.FC<MetricCardProps> = ({ label, value, className }) => (
+  <div className={`metric-card ${className}`}>
+    <div className="metric-label">{label}</div>
+    <div className="metric-value">{value}</div>
+    <div className="metric-bar">
+      <div className="metric-fill" style={{ width: value }} />
+    </div>
+  </div>
+);
+
+// Reusable class item component
+const ClassItem: React.FC<ClassItemProps> = ({ className, accuracy, samples, isLowPerformance }) => {
+  const formatPercent = (value: number) => `${(value * 100).toFixed(2)}%`;
+  return (
+    <div className={`class-item ${isLowPerformance ? 'low-performance' : ''}`}>
+      <span className="class-name">{className}</span>
+      <div className="class-metrics">
+        <span className="class-accuracy">{formatPercent(accuracy)}</span>
+        <span className="class-samples">({samples} samples)</span>
+      </div>
+      <div className="class-bar">
+        <div className="class-fill" style={{ width: formatPercent(accuracy) }} />
+      </div>
+    </div>
+  );
+};
+
 const ModelStats: React.FC = () => {
   const [metrics, setMetrics] = useState<ModelMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +111,18 @@ const ModelStats: React.FC = () => {
 
     fetchMetrics();
   }, []);
+
+  // Format date
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleString();
+  };
+
+  // Format percentage
+  const formatPercent = (value?: number) => {
+    if (value === undefined || value === null) return 'N/A';
+    return `${(value * 100).toFixed(2)}%`;
+  };
 
   if (loading) {
     return (
@@ -118,18 +184,6 @@ const ModelStats: React.FC = () => {
   const topClasses = sortedClasses.slice(0, 5);
   const bottomClasses = sortedClasses.slice(-5).reverse();
 
-  // Format date
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString();
-  };
-
-  // Format percentage
-  const formatPercent = (value?: number) => {
-    if (value === undefined || value === null) return 'N/A';
-    return `${(value * 100).toFixed(2)}%`;
-  };
-
   return (
     <div className="model-stats">
       <div className="stats-header">
@@ -141,26 +195,11 @@ const ModelStats: React.FC = () => {
       <div className="stats-section">
         <h3>🤖 Model Overview</h3>
         <div className="info-grid">
-          <div className="info-item">
-            <span className="label">Model Type:</span>
-            <span className="value">{metrics?.model_name || 'N/A'}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Training Date:</span>
-            <span className="value">{formatDate(metrics?.training_date)}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Number of Classes:</span>
-            <span className="value">{metrics?.num_classes || 'N/A'}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Training Samples:</span>
-            <span className="value">{metrics?.num_train_samples || 'N/A'}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Test Samples:</span>
-            <span className="value">{metrics?.num_test_samples || 'N/A'}</span>
-          </div>
+          <InfoItem label="Model Type" value={metrics?.model_name || 'N/A'} />
+          <InfoItem label="Training Date" value={formatDate(metrics?.training_date)} />
+          <InfoItem label="Number of Classes" value={metrics?.num_classes || 'N/A'} />
+          <InfoItem label="Training Samples" value={metrics?.num_train_samples || 'N/A'} />
+          <InfoItem label="Test Samples" value={metrics?.num_test_samples || 'N/A'} />
         </div>
       </div>
 
@@ -168,30 +207,12 @@ const ModelStats: React.FC = () => {
       <div className="stats-section">
         <h3>⚙️ Hyperparameters</h3>
         <div className="info-grid">
-          <div className="info-item">
-            <span className="label">Epochs:</span>
-            <span className="value">{metrics?.hyperparameters?.num_epochs || 'N/A'}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Batch Size:</span>
-            <span className="value">{metrics?.hyperparameters?.batch_size || 'N/A'}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Learning Rate:</span>
-            <span className="value">{metrics?.hyperparameters?.learning_rate || 'N/A'}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Optimizer:</span>
-            <span className="value">{metrics?.hyperparameters?.optimizer || 'N/A'}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Warmup Steps:</span>
-            <span className="value">{metrics?.hyperparameters?.warmup_steps || 'N/A'}</span>
-          </div>
-          <div className="info-item">
-            <span className="label">Weight Decay:</span>
-            <span className="value">{metrics?.hyperparameters?.weight_decay || 'N/A'}</span>
-          </div>
+          <InfoItem label="Epochs" value={metrics?.hyperparameters?.num_epochs || 'N/A'} />
+          <InfoItem label="Batch Size" value={metrics?.hyperparameters?.batch_size || 'N/A'} />
+          <InfoItem label="Learning Rate" value={metrics?.hyperparameters?.learning_rate || 'N/A'} />
+          <InfoItem label="Optimizer" value={metrics?.hyperparameters?.optimizer || 'N/A'} />
+          <InfoItem label="Warmup Steps" value={metrics?.hyperparameters?.warmup_steps || 'N/A'} />
+          <InfoItem label="Weight Decay" value={metrics?.hyperparameters?.weight_decay || 'N/A'} />
         </div>
       </div>
 
@@ -199,46 +220,26 @@ const ModelStats: React.FC = () => {
       <div className="stats-section">
         <h3>📈 Performance Metrics</h3>
         <div className="metrics-grid">
-          <div className="metric-card accuracy">
-            <div className="metric-label">Accuracy</div>
-            <div className="metric-value">{formatPercent(metrics?.results?.test_accuracy)}</div>
-            <div className="metric-bar">
-              <div
-                className="metric-fill"
-                style={{ width: formatPercent(metrics?.results?.test_accuracy) }}
-              />
-            </div>
-          </div>
-          <div className="metric-card precision">
-            <div className="metric-label">Precision</div>
-            <div className="metric-value">{formatPercent(metrics?.results?.test_precision)}</div>
-            <div className="metric-bar">
-              <div
-                className="metric-fill"
-                style={{ width: formatPercent(metrics?.results?.test_precision) }}
-              />
-            </div>
-          </div>
-          <div className="metric-card recall">
-            <div className="metric-label">Recall</div>
-            <div className="metric-value">{formatPercent(metrics?.results?.test_recall)}</div>
-            <div className="metric-bar">
-              <div
-                className="metric-fill"
-                style={{ width: formatPercent(metrics?.results?.test_recall) }}
-              />
-            </div>
-          </div>
-          <div className="metric-card f1">
-            <div className="metric-label">F1 Score</div>
-            <div className="metric-value">{formatPercent(metrics?.results?.test_f1)}</div>
-            <div className="metric-bar">
-              <div
-                className="metric-fill"
-                style={{ width: formatPercent(metrics?.results?.test_f1) }}
-              />
-            </div>
-          </div>
+          <MetricCard
+            label="Accuracy"
+            value={formatPercent(metrics?.results?.test_accuracy)}
+            className="accuracy"
+          />
+          <MetricCard
+            label="Precision"
+            value={formatPercent(metrics?.results?.test_precision)}
+            className="precision"
+          />
+          <MetricCard
+            label="Recall"
+            value={formatPercent(metrics?.results?.test_recall)}
+            className="recall"
+          />
+          <MetricCard
+            label="F1 Score"
+            value={formatPercent(metrics?.results?.test_f1)}
+            className="f1"
+          />
         </div>
       </div>
 
@@ -248,19 +249,12 @@ const ModelStats: React.FC = () => {
           <h3>🏆 Top Performing Classes</h3>
           <div className="class-list">
             {topClasses.map(([className, classMetrics]) => (
-              <div key={className} className="class-item">
-                <span className="class-name">{className}</span>
-                <div className="class-metrics">
-                  <span className="class-accuracy">{formatPercent(classMetrics.accuracy)}</span>
-                  <span className="class-samples">({classMetrics.samples} samples)</span>
-                </div>
-                <div className="class-bar">
-                  <div
-                    className="class-fill"
-                    style={{ width: formatPercent(classMetrics.accuracy) }}
-                  />
-                </div>
-              </div>
+              <ClassItem
+                key={className}
+                className={className}
+                accuracy={classMetrics.accuracy}
+                samples={classMetrics.samples}
+              />
             ))}
           </div>
         </div>
@@ -271,19 +265,13 @@ const ModelStats: React.FC = () => {
           <h3>📉 Needs Improvement</h3>
           <div className="class-list">
             {bottomClasses.map(([className, classMetrics]) => (
-              <div key={className} className="class-item low-performance">
-                <span className="class-name">{className}</span>
-                <div className="class-metrics">
-                  <span className="class-accuracy">{formatPercent(classMetrics.accuracy)}</span>
-                  <span className="class-samples">({classMetrics.samples} samples)</span>
-                </div>
-                <div className="class-bar">
-                  <div
-                    className="class-fill"
-                    style={{ width: formatPercent(classMetrics.accuracy) }}
-                  />
-                </div>
-              </div>
+              <ClassItem
+                key={className}
+                className={className}
+                accuracy={classMetrics.accuracy}
+                samples={classMetrics.samples}
+                isLowPerformance={true}
+              />
             ))}
           </div>
         </div>

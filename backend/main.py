@@ -111,6 +111,7 @@ async def augment_image(request: AugmentationRequest):
 
         # Get augmenter and apply edit
         augmenter = get_image_augmenter()
+        print(f"\n🎨 Processing augmentation: {request.edit_type}")
         augmented_image = augmenter.apply_edit(
             image_bytes,
             request.edit_type,
@@ -122,8 +123,12 @@ async def augment_image(request: AugmentationRequest):
         augmented_image.save(buffered, format="PNG")
         img_base64 = base64.b64encode(buffered.getvalue()).decode()
 
+        print(f"✓ Augmentation complete, returning {len(img_base64)} byte image")
         return {"augmented_image": img_base64}
     except Exception as e:
+        import traceback
+        error_detail = traceback.format_exc()
+        print(f"❌ Augmentation endpoint error:\n{error_detail}")
         raise HTTPException(status_code=500, detail=f"Augmentation failed: {str(e)}")
 
 

@@ -16,6 +16,14 @@
   max-width: 250px;
 }
 
+.bird-card.compact.clickable {
+  cursor: pointer;
+}
+
+.bird-card.compact.clickable:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+
 .bird-image-container {
   position: relative;
   width: 100%;

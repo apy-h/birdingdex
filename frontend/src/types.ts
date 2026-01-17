@@ -1,3 +1,13 @@
+export interface BirdImage {
+  imageUrl: string;
+  confidence: number;
+  topPredictions?: {
+    species: string;
+    confidence: number;
+  }[];
+  augmentedImages?: string[]; // Array of augmented image data URLs
+}
+
 export interface Bird {
   species: string;
   confidence: number;
@@ -7,6 +17,8 @@ export interface Bird {
     confidence: number;
   }[];
   augmentedImageUrl?: string;
+  // For collection view with multiple images per species
+  images?: BirdImage[];
 }
 
 export interface ClassificationResult {
