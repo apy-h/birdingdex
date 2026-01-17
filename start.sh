@@ -12,11 +12,26 @@ fi
 
 # Step 1: Install dependencies
 echo ""
-echo "📦 Step 1: Installing dependencies to virtual enviroment..."
+echo "📦 Step 1: Installing dependencies to virtual environment..."
 cd backend
-python3 -m venv venv
+
+# Check if venv exists, create if not
+if [ ! -d "venv" ]; then
+    echo "Creating virtual environment..."
+    python3 -m venv venv
+else
+    echo "✓ Virtual environment already exists"
+fi
+
 source venv/bin/activate
-pip install -r requirements.txt # TODO: make it check if these are already downloaded first
+
+# Check if requirements are installed
+if python3 -c "import torch, transformers, fastapi" 2>/dev/null; then
+    echo "✓ Dependencies already installed"
+else
+    echo "Installing dependencies..."
+    pip install -r requirements.txt
+fi
 
 # Step 2: Train the model
 echo ""
