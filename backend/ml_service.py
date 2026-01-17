@@ -235,6 +235,10 @@ class ImageAugmenter:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Using device for augmentation: {self.device}")
 
+        # Optimize CPU threading (reduces overhead)
+        if self.device == "cpu":
+            torch.set_num_threads(4)
+
         # Edit type to prompt mapping
         self.edit_prompts = {
             "hat": "a bird wearing a cute party hat",
@@ -245,18 +249,35 @@ class ImageAugmenter:
         }
 
         try:
-            # TODO: will this have to reloaded every time the app starts up???
-            print("Loading Stable Diffusion inpainting model...")
+            print("Loading inpainting model...")
+
+            # Use SD 1.5 inpainting - proven, lightweight, works well on CPU
+            # ~4GB model. Note: Free inpainting models typically use pickle format,
+            # not safetensors. SDXL is too heavy for CPU, SD 2.0 not publicly available
             self.pipeline = StableDiffusionInpaintPipeline.from_pretrained(
                 "runwayml/stable-diffusion-inpainting",
-                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
-                safety_checker=None  # Disable safety checker for faster inference
+                torch_dtype=torch.float32,  # CPU requires float32
+                safety_checker=None,
+                requires_safety_checker=False
             )
             self.pipeline.to(self.device)
-            self.pipeline.enable_attention_slicing()  # Reduces memory usage
+
+            # Enable memory & speed optimizations for CPU
+            self.pipeline.enable_attention_slicing()
+            self.pipeline.enable_vae_slicing()
+            self.pipeline.enable_vae_tiling()  # Additional speed optimization
+
+            # Try to use xformers for faster attention (if available)
+            try:
+                self.pipeline.enable_xformers_memory_efficient_attention()
+            except (ImportError, AttributeError):
+                pass  # xformers not installed, use default attention
+
             print("✓ Stable Diffusion inpainting model loaded successfully")
         except Exception as e:
-            print(f"Warning: Failed to load Stable Diffusion inpainting model: {e}")
+            import traceback
+            print(f"Warning: Failed to load Stable Diffusion inpainting model:")
+            print(traceback.format_exc())
             print("Falling back to demo mode (text overlay only)")
             self.pipeline = None
 
@@ -296,15 +317,17 @@ class ImageAugmenter:
                 print(f"✓ Created mask: {mask.size}")
 
                 try:
-                    print(f"Starting inference with 10 steps...")
-                    # Generate inpainted image
+                    print(f"Starting inference with 5 steps (fast mode)...")
+                    # Generate inpainted image with speed optimizations:
+                    # - 5 steps instead of 10 (2x faster, still decent quality)
+                    # - Lower guidance scale (5.0 instead of 7.5) = faster + slightly more creative
                     with torch.no_grad():
                         result = self.pipeline(
                             prompt=prompt,
                             image=image_resized,
                             mask_image=mask,
-                            num_inference_steps=10,
-                            guidance_scale=7.5,
+                            num_inference_steps=5,
+                            guidance_scale=5.0,
                             height=512,
                             width=512,
                         ).images[0]
@@ -317,6 +340,7 @@ class ImageAugmenter:
                     print(f"Mask dtype: {type(mask)}, size: {mask.size}")
                     raise
             else:
+                # FIXME
                 # Demo mode: add text overlay to indicate edit
                 from PIL import ImageFont
 

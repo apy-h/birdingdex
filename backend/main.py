@@ -4,11 +4,14 @@ Provides REST APIs for image upload, bird classification, and image augmentation
 """
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import io
 import base64
 from typing import Optional, List
 import uvicorn
+import os
 
 from ml_service import BirdClassifier, ImageAugmenter
 
@@ -17,7 +20,7 @@ app = FastAPI(title="Birdingdex API", version="1.0.0")
 # Configure CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -196,6 +199,14 @@ async def get_model_metrics():
         return metrics
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get model metrics: {str(e)}")
+
+
+# Serve static frontend files
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "dist")
+if os.path.exists(STATIC_DIR):
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
+else:
+    print(f"Warning: Static directory not found at {STATIC_DIR}. Frontend will not be served.")
 
 
 if __name__ == "__main__":
