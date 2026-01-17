@@ -322,11 +322,16 @@ if __name__ == "__main__":
     parser.add_argument('--max-samples', type=int, default=100, help='Max samples per class')
     parser.add_argument('--image-size', type=int, default=224, help='Image size for resizing (default: 224)')
     parser.add_argument('--output-dir', type=str, default=DEFAULT_OUTPUT_DIR, help='Output directory')
+    parser.add_argument('--no-cuda', action='store_true', help='Force CPU and skip CUDA availability check')
 
     args = parser.parse_args()
 
-    # Check for CUDA
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # Check for CUDA (unless user disables)
+    if args.no_cuda:
+        device = "cpu"
+        print("CUDA check disabled via --no-cuda; using CPU")
+    else:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
     if device == "cpu":
         print("⚠️  Warning: Training on CPU will be slow. Consider using GPU for faster training.")
