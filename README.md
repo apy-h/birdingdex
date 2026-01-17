@@ -60,17 +60,11 @@ The frontend will be running at `http://localhost:3000`
 
 ### Training the Model
 
-By default, the app uses the pre-trained base Vision Transformer (`google/vit-base-patch16-224` from HuggingFace). To improve accuracy for all 200 bird species, you can optionally fine-tune it on the CUB-200-2011 bird dataset:
+By default, the app uses the pre-trained base Vision Transformer (`google/vit-base-patch16-224` from HuggingFace). To improve accuracy for all 200 bird species, you can optionally fine-tune it on the CUB-200-2011 bird dataset.
 
-**Quick test** (CPU-friendly, ~10–15 min):
 ```bash
 cd backend
-python train_model.py --epochs 1 --max-samples 20 --batch-size 4
-```
-
-**Standard training** (full dataset):
-```bash
-python train_model.py --epochs 10 --max-samples 200 --batch-size 8
+python train_model.py
 ```
 
 The script automatically downloads the dataset via Kaggle API or falls back to direct download. See the [Development](#-development) section for Kaggle API setup and troubleshooting.

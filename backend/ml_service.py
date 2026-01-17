@@ -168,7 +168,12 @@ class BirdClassifier:
         """
         import json
 
-        metrics_path = os.path.join(os.path.dirname(self.model_path), 'model_metrics.json')
+        # Look for metrics file at backend/models/model_metrics.json or in same directory as model
+        metrics_path = os.path.join(os.path.dirname(os.path.dirname(self.model_path)), 'model_metrics.json')
+
+        # Fallback to looking in the model directory itself
+        if not os.path.exists(metrics_path):
+            metrics_path = os.path.join(self.model_path, 'model_metrics.json')
 
         try:
             if os.path.exists(metrics_path):
