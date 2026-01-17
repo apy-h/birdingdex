@@ -229,3 +229,7 @@ backend/models/
 # Uploaded images
 uploads/
 backend/uploads/
+
+# Datasets (large downloads)
+dataset/
+backend/dataset/

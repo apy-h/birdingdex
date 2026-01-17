@@ -75,21 +75,21 @@ async def health_check():
 async def classify_bird(file: UploadFile = File(...)):
     """
     Classify bird species from uploaded image.
-    
+
     Args:
         file: Uploaded image file
-        
+
     Returns:
         Classification result with species and confidence
     """
     try:
         # Read image data
         image_data = await file.read()
-        
+
         # Get classifier and perform inference
         classifier = get_bird_classifier()
         result = classifier.classify(image_data)
-        
+
         return ClassificationResult(**result)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Classification failed: {str(e)}")
@@ -99,17 +99,17 @@ async def classify_bird(file: UploadFile = File(...)):
 async def augment_image(request: AugmentationRequest):
     """
     Apply cosmetic edits to bird image using Stable Diffusion inpainting.
-    
+
     Args:
         request: Augmentation request with image and edit type
-        
+
     Returns:
         Augmented image as base64
     """
     try:
         # Decode base64 image
         image_bytes = base64.b64decode(request.image_base64)
-        
+
         # Get augmenter and apply edit
         augmenter = get_image_augmenter()
         augmented_image = augmenter.apply_edit(
@@ -117,12 +117,12 @@ async def augment_image(request: AugmentationRequest):
             request.edit_type,
             request.prompt
         )
-        
+
         # Encode result as base64
         buffered = io.BytesIO()
         augmented_image.save(buffered, format="PNG")
         img_base64 = base64.b64encode(buffered.getvalue()).decode()
-        
+
         return {"augmented_image": img_base64}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Augmentation failed: {str(e)}")
@@ -132,10 +132,10 @@ async def augment_image(request: AugmentationRequest):
 async def upload_image(file: UploadFile = File(...)):
     """
     Upload and validate bird image.
-    
+
     Args:
         file: Uploaded image file
-        
+
     Returns:
         Upload confirmation with image metadata
     """
@@ -143,13 +143,13 @@ async def upload_image(file: UploadFile = File(...)):
         # Validate file type
         if not file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="File must be an image")
-        
+
         # Read image data
         image_data = await file.read()
-        
+
         # Convert to base64 for frontend
         img_base64 = base64.b64encode(image_data).decode()
-        
+
         return {
             "success": True,
             "filename": file.filename,
@@ -166,7 +166,7 @@ async def upload_image(file: UploadFile = File(...)):
 async def get_species_list():
     """
     Get list of all supported bird species.
-    
+
     Returns:
         List of bird species
     """
@@ -176,6 +176,22 @@ async def get_species_list():
         return {"species": species_list, "count": len(species_list)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get species list: {str(e)}")
+
+
+@app.get("/api/model/metrics")
+async def get_model_metrics():
+    """
+    Get model training metrics and performance statistics.
+
+    Returns:
+        Model metrics including accuracy, hyperparameters, and per-class performance
+    """
+    try:
+        classifier = get_bird_classifier()
+        metrics = classifier.get_model_metrics()
+        return metrics
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get model metrics: {str(e)}")
 
 
 if __name__ == "__main__":

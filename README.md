@@ -5,8 +5,10 @@ A Pokédex for Birds! A full-stack web application that uses AI to identify bird
 ## ✨ Features
 
 - 🤖 **AI-Powered Classification**: Upload bird photos and get instant species identification using Vision Transformer models
+- � **Fine-Tuned Model**: Train your own bird classifier on the OpenML Birds dataset (525 species)
+- 📊 **Model Statistics**: View detailed performance metrics, accuracy, and hyperparameters
 - 🎨 **Image Augmentation**: Add fun accessories to your bird photos (hats, bowties, glasses) using Stable Diffusion inpainting
-- 📊 **Collection Tracking**: Build your personal bird collection and track your progress
+- 📈 **Collection Tracking**: Build your personal bird collection and track your progress
 - 🎯 **Modern UI**: Beautiful, responsive React interface with TypeScript
 - ⚡ **Fast API**: High-performance FastAPI backend with async support
 
@@ -25,10 +27,11 @@ A Pokédex for Birds! A full-stack web application that uses AI to identify bird
 
 ### ML/AI
 - **HuggingFace Transformers** for bird classification
-- **Vision Transformer (ViT)** or **EfficientNet** models
+- **Vision Transformer (ViT)** fine-tuned on OpenML bird dataset
 - **Stable Diffusion** via diffusers for image inpainting
 - **PyTorch** for deep learning
-- OpenML bird dataset compatible
+- **scikit-learn** for dataset loading and metrics
+- OpenML Birds 525 Species dataset (ID: 44320)
 
 ## 📋 Prerequisites
 
@@ -83,13 +86,35 @@ npm run dev
 
 The frontend will be running at `http://localhost:3000`
 
+## � Fine-Tuning the Model (Optional)
+
+For best results, fine-tune the model on the OpenML bird dataset:
+
+```bash
+cd backend
+python train_model.py
+```
+
+**Quick training** (for testing):
+```bash
+python train_model.py --epochs 3 --max-samples 50
+```
+
+**Production quality**:
+```bash
+python train_model.py --epochs 10 --max-samples 200
+```
+
+See [TRAINING_GUIDE.md](TRAINING_GUIDE.md) for detailed instructions.
+
 ## 🎮 Usage
 
 1. **Upload a Bird Photo**: Click or drag-and-drop a bird image onto the upload area
 2. **Get Identification**: The AI will classify the bird species with confidence scores
-3. **View Your Collection**: See all the birds you've discovered in your collection grid
-4. **Track Progress**: Monitor how many species you've found
-5. **Add Accessories** (optional): Click the accessory buttons to add fun cosmetic edits to your bird photos
+3. **View Model Stats**: Click "📊 Model Stats" to see model performance and metrics
+4. **View Your Collection**: See all the birds you've discovered in your collection grid
+5. **Track Progress**: Monitor how many species you've found
+6. **Add Accessories** (optional): Click the accessory buttons to add fun cosmetic edits to your bird photos
 
 ## 🔌 API Endpoints
 
@@ -97,6 +122,7 @@ The frontend will be running at `http://localhost:3000`
 - `GET /` - API welcome message
 - `GET /health` - Health check
 - `GET /api/species` - Get list of all supported bird species
+- `GET /api/model/metrics` - Get model training metrics and performance stats
 
 ### Bird Classification
 - `POST /api/upload` - Upload and validate an image
@@ -112,12 +138,18 @@ birdingdex/
 ├── backend/
 │   ├── main.py              # FastAPI application
 │   ├── ml_service.py        # ML models and inference
-│   └── requirements.txt     # Python dependencies
+│   ├── train_model.py       # Model fine-tuning script
+│   ├── requirements.txt     # Python dependencies
+│   └── models/              # Saved models directory
+│       ├── bird_classifier/ # Fine-tuned model
+│       └── model_metrics.json
 ├── frontend/
 │   ├── src/
 │   │   ├── components/      # React components
 │   │   │   ├── ImageUpload.tsx
 │   │   │   ├── BirdCard.tsx
+│   │   │   ├── CollectionProgress.tsx
+│   │   │   └── ModelStats.tsx
 │   │   │   └── CollectionProgress.tsx
 │   │   ├── App.tsx          # Main app component
 │   │   ├── api.ts           # API client

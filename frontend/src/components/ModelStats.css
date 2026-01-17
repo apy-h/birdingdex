@@ -1,0 +1,279 @@
+.model-stats {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.stats-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.stats-header h2 {
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.stats-header .subtitle {
+  color: #7f8c8d;
+  font-size: 1.1rem;
+}
+
+.stats-section {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stats-section h3 {
+  color: #34495e;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-item .label {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-item .value {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.metric-card {
+  padding: 1.5rem;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card.accuracy {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.metric-card.precision {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.metric-card.recall {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.metric-card.f1 {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.metric-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.metric-bar {
+  background: rgba(255, 255, 255, 0.2);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.metric-fill {
+  background: white;
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Class Performance */
+.class-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.class-item {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #3498db;
+  transition: transform 0.2s ease;
+}
+
+.class-item:hover {
+  transform: translateX(4px);
+}
+
+.class-item.low-performance {
+  border-left-color: #e74c3c;
+}
+
+.class-name {
+  display: block;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.class-metrics {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.class-accuracy {
+  color: #3498db;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.class-samples {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+}
+
+.class-bar {
+  background: #e0e0e0;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.class-fill {
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.class-item.low-performance .class-fill {
+  background: linear-gradient(90deg, #e74c3c, #f39c12);
+}
+
+/* Loading and Error States */
+.loading {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.2rem;
+  color: #7f8c8d;
+}
+
+.error-message,
+.demo-notice {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 2rem;
+  margin: 2rem 0;
+}
+
+.error-message h3,
+.demo-message h3 {
+  color: #856404;
+  margin-bottom: 1rem;
+}
+
+.error-message p,
+.demo-message p {
+  color: #664d03;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.training-instructions {
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.command {
+  display: block;
+  background: #2c3e50;
+  color: #2ecc71;
+  padding: 1rem;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.note {
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.demo-info {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.demo-info p {
+  margin: 0.5rem 0;
+}
+
+.demo-info strong {
+  color: #2c3e50;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .model-stats {
+    padding: 1rem;
+  }
+
+  .stats-header h2 {
+    font-size: 2rem;
+  }
+
+  .info-grid,
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-section {
+    padding: 1.5rem;
+  }
+}
