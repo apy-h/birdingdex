@@ -29,7 +29,7 @@ class BirdClassifier:
         if model_path is None:
             SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
             models_dir = os.path.join(SCRIPT_DIR, 'models')
-            
+
             # Look for timestamped models (bird_classifier_YYYY-MM-DD_HH-MM-SS format)
             timestamped_models = []
             if os.path.exists(models_dir):
@@ -38,7 +38,7 @@ class BirdClassifier:
                         item_path = os.path.join(models_dir, item)
                         if os.path.isdir(item_path):
                             timestamped_models.append(item)
-            
+
             # Use latest timestamped model if available, otherwise fall back to non-timestamped
             if timestamped_models:
                 timestamped_models.sort(reverse=True)  # Sort descending to get latest first

@@ -215,7 +215,7 @@ def download_cub_direct(data_dir, dataset_path):
 
 def load_cub_dataset(dataset_path, data_dir, max_samples_per_class):
     """Load CUB-200-2011 dataset from disk with intelligent caching.
-    
+
     Implements dual-tier caching:
     - Cache 1: All resized images (parameter-independent, ~11,788 images)
     - Cache 2: Balanced subset per max_samples_per_class (parameter-dependent)
@@ -556,13 +556,23 @@ def train_model(
 
     print(f"✓ Model saved to {model_path}")
 
-    # Delete checkpoints directory if it exists (safe to delete after training complete)
-    # Note: Checkpoints folder contains intermediate epoch saves and is not needed after training
-    checkpoints_dir = os.path.join(timestamped_model_dir, 'checkpoints')
-    if os.path.exists(checkpoints_dir):
-        print(f"\n  Cleaning up checkpoints directory...")
-        shutil.rmtree(checkpoints_dir)
-        print(f"  ✓ Checkpoints directory deleted")
+    # Delete checkpoint directories if they exist (safe to delete after training complete)
+    # Note: Checkpoint folders contain intermediate epoch saves and are not needed after final model is saved
+    print(f"\nCleaning up checkpoint directories...")
+    checkpoint_count = 0
+    for item in os.listdir(output_dir):
+        item_path = os.path.join(output_dir, item)
+        if os.path.isdir(item_path) and item.startswith('checkpoint-'):
+            try:
+                shutil.rmtree(item_path)
+                checkpoint_count += 1
+            except Exception as e:
+                print(f"  Warning: Failed to delete {item}: {e}")
+
+    if checkpoint_count > 0:
+        print(f"✓ Deleted {checkpoint_count} checkpoint director{'y' if checkpoint_count == 1 else 'ies'}")
+    else:
+        print(f"  No checkpoint directories found")
 
     # Print summary
     print("\n" + "=" * 60)
