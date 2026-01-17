@@ -7,10 +7,10 @@ torchvision==0.21.0
 transformers==4.48.0
 diffusers==0.31.0
 accelerate==1.1.1
-# xformers==0.0.27  # Optional: Faster attention computation (20-30% speed improvement)
+# xformers==0.0.27     # Optional: Faster attention computation (20-30% speed improvement)
 numpy==1.26.4
 pydantic==2.10.3
-scikit-learn==1.5.2
+# scikit-learn==1.5.2  # training-only (fine-tuning). Commented out for runtime-only deploy
 tqdm==4.67.1
-pandas==2.2.0
-kaggle==1.6.17
+# kaggle==1.6.17  # dataset download & training utilities. Commented out for runtime-only deploy
+# pandas==2.2.0   # training/analysis. Commented out to avoid source builds on Render

@@ -16,7 +16,7 @@ cp -r frontend/dist backend/dist
 
 echo "⚙️ Installing backend dependencies..."
 cd backend
-pip install -r requirements.txt
+pip install -r --no-cache-dir --prefer-binary -r requirements.txt
 
 # TODO
 # echo "📥 Downloading pre-trained model from HuggingFace..."
