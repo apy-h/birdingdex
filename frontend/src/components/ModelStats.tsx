@@ -77,7 +77,11 @@ const ModelStats: React.FC = () => {
           </p>
           <code className="command">python train_model.py</code>
           <p className="note">
-            This will fine-tune the Vision Transformer model on the OpenML bird dataset.
+            This will fine-tune the Vision Transformer model on the{' '}
+            <a href="https://www.kaggle.com/datasets/wenewone/cub2002011" target="_blank" rel="noopener noreferrer" className="dataset-link">
+              CUB-200-2011 dataset
+            </a>
+            .
           </p>
         </div>
       </div>

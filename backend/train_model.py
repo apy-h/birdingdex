@@ -1,5 +1,5 @@
 """
-Training script for fine-tuning a Vision Transformer model on OpenML bird dataset.
+"""Training script for fine-tuning a Vision Transformer model on CUB-200-2011 bird dataset.
 Dataset: OpenML ID 44320 - Birds 525 Species
 
 This script:
@@ -79,18 +79,23 @@ class BirdDataset(Dataset):
         }
 
 
-def download_and_prepare_dataset(data_dir='dataset/bird_images', max_samples_per_class=100):
+def download_and_prepare_dataset(data_dir=None, max_samples_per_class=100):
     """
     Download and prepare the CUB-200-2011 bird dataset.
     Tries Kaggle API first, then falls back to direct download.
 
     Args:
-        data_dir: Directory to save/cache images
+        data_dir: Directory to save/cache images (defaults to backend/dataset)
         max_samples_per_class: Maximum samples per class (for faster training)
 
     Returns:
         Tuple of (train_images, train_labels, test_images, test_labels, class_names)
     """
+    # Default to backend/dataset if not specified
+    if data_dir is None:
+        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(SCRIPT_DIR, 'dataset')
+
     print("=" * 60)
     print("CUB-200-2011 BIRD DATASET")
     print("=" * 60)
@@ -359,7 +364,7 @@ def compute_metrics(eval_pred):
 
 
 def train_model(
-    output_dir='backend/models',
+    output_dir=None,
     model_name='google/vit-base-patch16-224',
     num_epochs=5,
     batch_size=16,
@@ -370,13 +375,18 @@ def train_model(
     Fine-tune a Vision Transformer model on the bird dataset.
 
     Args:
-        output_dir: Directory to save the model and metrics
+        output_dir: Directory to save the model and metrics (defaults to backend/models)
         model_name: Pre-trained model name from HuggingFace
         num_epochs: Number of training epochs
         batch_size: Batch size for training
         learning_rate: Learning rate
         max_samples_per_class: Maximum samples per class
     """
+    # Default to backend/models if not specified
+    if output_dir is None:
+        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+        output_dir = os.path.join(SCRIPT_DIR, 'models')
+
     print("=" * 60)
     print("BIRD CLASSIFIER TRAINING")
     print("=" * 60)
@@ -534,12 +544,16 @@ def train_model(
 if __name__ == "__main__":
     import argparse
 
+    # Get the directory where this script is located (backend/)
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    DEFAULT_OUTPUT_DIR = os.path.join(SCRIPT_DIR, 'models')
+
     parser = argparse.ArgumentParser(description='Train bird classifier model')
     parser.add_argument('--epochs', type=int, default=5, help='Number of training epochs')
     parser.add_argument('--batch-size', type=int, default=16, help='Batch size')
     parser.add_argument('--learning-rate', type=float, default=2e-5, help='Learning rate')
     parser.add_argument('--max-samples', type=int, default=100, help='Max samples per class')
-    parser.add_argument('--output-dir', type=str, default='backend/models', help='Output directory')
+    parser.add_argument('--output-dir', type=str, default=DEFAULT_OUTPUT_DIR, help='Output directory')
 
     args = parser.parse_args()
 

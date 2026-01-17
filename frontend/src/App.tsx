@@ -41,8 +41,13 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>🦅 Birdingdex</h1>
-        <p className="subtitle">Catch 'em all! A Pokédex for Birds</p>
+        <div className="header-content">
+          <img src="/logo.png" alt="Birdingdex Logo" className="header-logo" />
+          <div className="header-text">
+            <h1>Birdingdex</h1>
+            <p className="subtitle">Catch 'em all! A Pokédex for Birds</p>
+          </div>
+        </div>
         <nav className="nav-menu">
           <button
             className={`nav-button ${currentPage === 'home' ? 'active' : ''}`}

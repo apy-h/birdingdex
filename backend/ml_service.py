@@ -16,15 +16,20 @@ warnings.filterwarnings("ignore")
 
 
 class BirdClassifier:
-    """Bird species classifier using Vision Transformer fine-tuned on OpenML bird dataset."""
+    """Bird species classifier using Vision Transformer fine-tuned on CUB-200-2011 bird dataset."""
 
-    def __init__(self, model_path="backend/models/bird_classifier"):
+    def __init__(self, model_path=None):
         """
         Initialize the classifier with a fine-tuned model.
 
         Args:
-            model_path: Path to the fine-tuned model directory
+            model_path: Path to the fine-tuned model directory (defaults to backend/models/bird_classifier)
         """
+        # Default to backend/models/bird_classifier if not specified
+        if model_path is None:
+            SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+            model_path = os.path.join(SCRIPT_DIR, 'models', 'bird_classifier')
+
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Using device: {self.device}")
 
@@ -176,7 +181,7 @@ class BirdClassifier:
                     'model_name': 'Demo Model',
                     'num_classes': len(self.species_list),
                     'status': 'Not trained - using demo model',
-                    'message': 'Run train_model.py to fine-tune the model on OpenML bird dataset',
+                    'message': 'Run train_model.py to fine-tune the model on CUB-200-2011 bird dataset (https://www.kaggle.com/datasets/wenewone/cub2002011)',
                     'hyperparameters': {
                         'num_epochs': 'N/A',
                         'batch_size': 'N/A',
