@@ -16,7 +16,7 @@ echo "📦 Step 1: Installing dependencies to virtual enviroment..."
 cd backend
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt # TODO: make it check if these are already downloaded first
 
 # Step 2: Train the model
 echo ""
@@ -27,15 +27,15 @@ read -p "Choose training mode (1=Quick test, 2=Standard, 3=High quality, 4=Skip)
 case $mode in
     1)
         echo "Running quick test (1 epochs, 20 samples/class, batch size 4)..."
-        python train_model.py --epochs 1 --max-samples 20 --batch-size 4
+        python3 train_model.py --epochs 1 --max-samples 20 --batch-size 4
         ;;
     2)
         echo "Running standard training (5 epochs, 100 samples/class, batch size 16)..."
-        python train_model.py --epochs 5 --max-samples 100 --batch-size 16
+        python3 train_model.py --epochs 5 --max-samples 100 --batch-size 16
         ;;
     3)
         echo "Running high quality training (10 epochs, 200 samples/class, batch size 32)..."
-        python train_model.py --epochs 10 --max-samples 200 --batch-size 32
+        python3 train_model.py --epochs 10 --max-samples 200 --batch-size 32
         ;;
     4)
         echo "Skipping training - app will run in demo mode"
@@ -50,7 +50,7 @@ echo ""
 echo "🚀 Step 3: Starting the backend..."
 echo "Backend will run at http://localhost:8000"
 echo ""
-python main.py &
+python3 main.py &
 BACKEND_PID=$!
 
 # Wait a bit for backend to start
