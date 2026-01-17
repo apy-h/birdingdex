@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { ClassificationResult, UploadResponse, AugmentationResponse } from './types';
 
-// Use env-configured API base in dev; default to same-origin in prod
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || '';
+// In production (Render), always use same-origin. In dev, allow override.
+const envUrl = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined;
+const isProd = typeof window !== 'undefined' && !window.location.host.includes('localhost');
+const API_BASE_URL = isProd ? '' : (envUrl || 'http://localhost:8000');
 
 export const api = {
   async uploadImage(file: File): Promise<UploadResponse> {
