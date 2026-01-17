@@ -1,9 +1,7 @@
-"""
 """Training script for fine-tuning a Vision Transformer model on CUB-200-2011 bird dataset.
-Dataset: OpenML ID 44320 - Birds 525 Species
 
 This script:
-1. Downloads the bird dataset from OpenML
+1. Downloads the bird dataset from Kaggle
 2. Prepares the data for training
 3. Fine-tunes a pre-trained Vision Transformer model
 4. Evaluates the model and saves metrics
@@ -13,12 +11,12 @@ This script:
 import os
 import json
 import torch
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
+from torch.utils.data import Dataset
 from PIL import Image
 import numpy as np
-from sklearn.datasets import fetch_openml
+import time
+import pickle
+import shutil
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support, confusion_matrix
 from transformers import (
@@ -28,8 +26,6 @@ from transformers import (
     Trainer
 )
 from datetime import datetime
-import requests
-from io import BytesIO
 from tqdm import tqdm
 import warnings
 
@@ -79,6 +75,39 @@ class BirdDataset(Dataset):
         }
 
 
+def organize_extracted_dataset(extracted_parent_path, dataset_path):
+    """
+    Organize extracted dataset to standard location.
+
+    Finds the extracted CUB_200_2011 directory and moves it to the standard location,
+    then cleans up the temporary extraction directory.
+
+    Args:
+        extracted_parent_path: Path where files were extracted
+        dataset_path: Target path for the dataset
+    """
+    import shutil
+
+    # Find the extracted directory
+    extracted_dirs = [d for d in os.listdir(extracted_parent_path)
+                      if os.path.isdir(os.path.join(extracted_parent_path, d))]
+
+    if extracted_dirs:
+        # Move the extracted dataset to standard location
+        src = os.path.join(extracted_parent_path, extracted_dirs[0])
+        shutil.move(src, dataset_path)
+        print(f"  ✓ Dataset moved to: {dataset_path}")
+    else:
+        # Files might be directly in the extraction path
+        if os.path.exists(extracted_parent_path):
+            os.rename(extracted_parent_path, dataset_path)
+            print(f"  ✓ Dataset ready at: {dataset_path}")
+
+    # Clean up temporary directory if it still exists
+    if os.path.exists(extracted_parent_path):
+        shutil.rmtree(extracted_parent_path)
+
+
 def download_and_prepare_dataset(data_dir=None, max_samples_per_class=100):
     """
     Download and prepare the CUB-200-2011 bird dataset.
@@ -118,46 +147,27 @@ def download_and_prepare_dataset(data_dir=None, max_samples_per_class=100):
             os.makedirs(kaggle_path, exist_ok=True)
 
             print(f"  Downloading from Kaggle: {kaggle_dataset}")
-            print(f"  Note: Requires Kaggle API credentials")
-            print(f"\n  Setup Kaggle API:")
-            print(f"    1. Go to https://www.kaggle.com/settings/account")
-            print(f"    2. Scroll to 'API' section and click 'Create New Token'")
-            print(f"    3. Save the downloaded kaggle.json to ~/.config/kaggle/")
-            print(f"       On WSL/Linux: mkdir -p ~/.config/kaggle && mv ~/Downloads/kaggle.json ~/.config/kaggle/")
-            print(f"       On Windows: mkdir %USERPROFILE%\\.kaggle && move Downloads\\kaggle.json %USERPROFILE%\\.kaggle\\")
-            print(f"    4. Set permissions: chmod 600 ~/.config/kaggle/kaggle.json\n")
 
+            start_time = time.time()
             kaggle.api.dataset_download_files(
                 kaggle_dataset,
                 path=kaggle_path,
-                unzip=True
+                unzip=True,
+                quiet=False
             )
+            elapsed = time.time() - start_time
+            print(f"  ✓ Successfully downloaded from Kaggle! ({elapsed:.1f}s)")
 
-            print(f"  ✓ Successfully downloaded from Kaggle!")
-
-            # Find the extracted directory
-            extracted_dirs = [d for d in os.listdir(kaggle_path) if os.path.isdir(os.path.join(kaggle_path, d))]
-            if extracted_dirs:
-                # Move to standard location
-                import shutil
-                src = os.path.join(kaggle_path, extracted_dirs[0])
-                shutil.move(src, dataset_path)
-                shutil.rmtree(kaggle_path)
-                print(f"  ✓ Dataset moved to: {dataset_path}")
-            else:
-                # Files might be directly in kaggle_path
-                os.rename(kaggle_path, dataset_path)
-
-        except ImportError:
-            print(f"  ✗ Kaggle API not installed")
-            print(f"  Install with: pip install kaggle")
-            print(f"  Setup instructions: https://github.com/Kaggle/kaggle-api")
-
-            # Try Method 2: Direct Download
-            download_cub_direct(data_dir, dataset_path)
+            # Move extracted dataset to standard location
+            organize_extracted_dataset(kaggle_path, dataset_path)
 
         except Exception as e:
-            print(f"  ✗ Kaggle failed: {e}")
+            print(f"  ✗ Kaggle download failed: {e}")
+            print(f"\n  Setup Kaggle API:")
+            print(f"    1. Go to https://www.kaggle.com/settings/account")
+            print(f"    2. Scroll to 'API' section and click 'Create New Token'")
+            print(f"    3. Add this token to your .env file:")
+            print(f"       KAGGLE_API_TOKEN=<your-api-token-from-json>")
 
             # Try Method 2: Direct Download
             download_cub_direct(data_dir, dataset_path)
@@ -168,7 +178,7 @@ def download_and_prepare_dataset(data_dir=None, max_samples_per_class=100):
 
 def download_cub_direct(data_dir, dataset_path):
     """Direct download from Caltech servers."""
-    print("\nMethod 3: Direct download from Caltech...")
+    print("\nMethod 2: Direct download from Caltech...")
     import tarfile
     import urllib.request
 
@@ -179,17 +189,24 @@ def download_cub_direct(data_dir, dataset_path):
     print(f"  Size: ~1.1 GB - This may take several minutes...")
 
     try:
+        start_time = time.time()
         urllib.request.urlretrieve(url, tgz_path)
-        print("  ✓ Download complete!")
+        elapsed = time.time() - start_time
+        print(f"  ✓ Download complete! ({elapsed:.1f}s)")
 
         print("  Extracting archive...")
+        extract_start = time.time()
         with tarfile.open(tgz_path, 'r:gz') as tar:
             tar.extractall(data_dir)
-        print("  ✓ Extraction complete!")
+        extract_elapsed = time.time() - extract_start
+        print(f"  ✓ Extraction complete! ({extract_elapsed:.1f}s)")
+
+        # Move extracted dataset to standard location
+        organize_extracted_dataset(data_dir, dataset_path)
 
         # Clean up tar file
-        os.remove(tgz_path)
-        print(f"  ✓ Dataset ready at: {dataset_path}")
+        if os.path.exists(tgz_path):
+            os.remove(tgz_path)
 
     except Exception as e:
         print(f"  ✗ Direct download failed: {e}")
@@ -197,59 +214,105 @@ def download_cub_direct(data_dir, dataset_path):
 
 
 def load_cub_dataset(dataset_path, data_dir, max_samples_per_class):
-    """Load CUB-200-2011 dataset from disk."""
+    """Load CUB-200-2011 dataset from disk with intelligent caching.
+    
+    Implements dual-tier caching:
+    - Cache 1: All resized images (parameter-independent, ~11,788 images)
+    - Cache 2: Balanced subset per max_samples_per_class (parameter-dependent)
+    """
     print("\n" + "=" * 60)
     print("LOADING CUB-200-2011 DATASET")
     print("=" * 60)
 
-    images_path = os.path.join(dataset_path, 'images')
+    load_start = time.time()
 
-    # Read image paths
-    images_file = os.path.join(dataset_path, 'images.txt')
-    labels_file = os.path.join(dataset_path, 'image_class_labels.txt')
-    classes_file = os.path.join(dataset_path, 'classes.txt')
+    # Define cache paths
+    all_images_cache = os.path.join(data_dir, 'cub_cache_resized.pkl')
+    balanced_cache = os.path.join(data_dir, f'cub_cache_balanced_max{max_samples_per_class}.pkl')
 
-    # Load class names
-    class_names = []
-    with open(classes_file, 'r') as f:
-        for line in f:
-            class_id, class_name = line.strip().split(' ', 1)
-            class_names.append(class_name)
+    # Check Cache 2 first (balanced dataset for this specific max_samples_per_class)
+    if os.path.exists(balanced_cache):
+        print(f"  Loading balanced dataset from cache...")
+        with open(balanced_cache, 'rb') as f:
+            cache_data = pickle.load(f)
+            X_train = cache_data['X_train']
+            X_test = cache_data['X_test']
+            y_train = cache_data['y_train']
+            y_test = cache_data['y_test']
+            class_names = cache_data['class_names']
+        load_elapsed = time.time() - load_start
+        print(f"  ✓ Loaded balanced dataset from cache! ({load_elapsed:.1f}s)")
+        return X_train, y_train, X_test, y_test, class_names
 
-    print(f"  Found {len(class_names)} bird species")
+    # Check Cache 1 (all resized images)
+    if os.path.exists(all_images_cache):
+        print(f"  Loading all resized images from cache...")
+        with open(all_images_cache, 'rb') as f:
+            cache_data = pickle.load(f)
+            all_images = cache_data['images']
+            all_labels = cache_data['labels']
+            class_names = cache_data['class_names']
+        print(f"  ✓ Loaded {len(all_images)} resized images from cache!")
+    else:
+        # Load from disk
+        images_path = os.path.join(dataset_path, 'images')
 
-    # Load image paths and labels
-    image_paths = {}
-    with open(images_file, 'r') as f:
-        for line in f:
-            img_id, img_path = line.strip().split(' ', 1)
-            image_paths[img_id] = img_path
+        # Read image paths
+        images_file = os.path.join(dataset_path, 'images.txt')
+        labels_file = os.path.join(dataset_path, 'image_class_labels.txt')
+        classes_file = os.path.join(dataset_path, 'classes.txt')
 
-    image_labels = {}
-    with open(labels_file, 'r') as f:
-        for line in f:
-            img_id, class_id = line.strip().split(' ')
-            image_labels[img_id] = int(class_id) - 1  # Convert to 0-indexed
+        # Load class names
+        class_names = []
+        with open(classes_file, 'r') as f:
+            for line in f:
+                class_id, class_name = line.strip().split(' ', 1)
+                class_names.append(class_name)
 
-    # Load images and create dataset
-    all_images = []
-    all_labels = []
+        print(f"  Found {len(class_names)} bird species")
 
-    print("  Loading and resizing images...")
-    for img_id in tqdm(sorted(image_paths.keys()), desc="Loading images"):
-        img_path = os.path.join(images_path, image_paths[img_id])
-        if os.path.exists(img_path):
-            try:
-                img = Image.open(img_path).convert('RGB')
-                # Resize to 224x224 for ViT
-                img = img.resize((224, 224))
-                all_images.append(img)
-                all_labels.append(image_labels[img_id])
-            except Exception as e:
-                print(f"    Warning: Failed to load {img_path}: {e}")
-                continue
+        # Load image paths and labels
+        image_paths = {}
+        with open(images_file, 'r') as f:
+            for line in f:
+                img_id, img_path = line.strip().split(' ', 1)
+                image_paths[img_id] = img_path
 
-    all_labels = np.array(all_labels)
+        image_labels = {}
+        with open(labels_file, 'r') as f:
+            for line in f:
+                img_id, class_id = line.strip().split(' ')
+                image_labels[img_id] = int(class_id) - 1  # Convert to 0-indexed
+
+        # Load images and create dataset
+        all_images = []
+        all_labels = []
+
+        print("  Loading and resizing images...")
+        for img_id in tqdm(sorted(image_paths.keys()), desc="Loading images"):
+            img_path = os.path.join(images_path, image_paths[img_id])
+            if os.path.exists(img_path):
+                try:
+                    img = Image.open(img_path).convert('RGB')
+                    # Resize to 224x224 for ViT
+                    img = img.resize((224, 224))
+                    all_images.append(img)
+                    all_labels.append(image_labels[img_id])
+                except Exception as e:
+                    print(f"    Warning: Failed to load {img_path}: {e}")
+                    continue
+
+        all_labels = np.array(all_labels)
+
+        # Save Cache 1 (all resized images)
+        print(f"  Saving resized images to cache...")
+        with open(all_images_cache, 'wb') as f:
+            pickle.dump({
+                'images': all_images,
+                'labels': all_labels,
+                'class_names': class_names
+            }, f)
+        print(f"  ✓ Cache saved to: {all_images_cache}")
 
     print(f"\n  Total images loaded: {len(all_images)}")
     print(f"  Total classes: {len(class_names)}")
@@ -292,57 +355,22 @@ def load_cub_dataset(dataset_path, data_dir, max_samples_per_class):
     print(f"\n  Train set: {len(X_train)} images")
     print(f"  Test set: {len(X_test)} images")
 
+    # Save Cache 2 (balanced dataset for this specific max_samples_per_class)
+    print(f"\n  Saving balanced dataset to cache...")
+    with open(balanced_cache, 'wb') as f:
+        pickle.dump({
+            'X_train': X_train,
+            'X_test': X_test,
+            'y_train': y_train,
+            'y_test': y_test,
+            'class_names': class_names
+        }, f)
+    print(f"  ✓ Balanced cache saved to: {balanced_cache}")
+
+    load_elapsed = time.time() - load_start
+    print(f"\n  ✓ Dataset loading complete! ({load_elapsed:.1f}s)")
+
     return X_train, y_train, X_test, y_test, class_names
-
-
-def create_synthetic_dataset():
-    """
-    Create a synthetic dataset for demonstration purposes.
-    This is used if OpenML download fails.
-    """
-    # Create synthetic data with common bird species
-    class_names = [
-        "American Robin", "Blue Jay", "Cardinal", "Chickadee", "Crow",
-        "Eagle", "Falcon", "Goldfinch", "Hawk", "Hummingbird",
-        "Kingfisher", "Mallard", "Osprey", "Owl", "Parrot",
-        "Pelican", "Penguin", "Pigeon", "Raven", "Sparrow"
-    ]
-
-    n_samples_per_class = 50
-    img_size = 224
-
-    train_images = []
-    train_labels = []
-    test_images = []
-    test_labels = []
-
-    for class_idx, class_name in enumerate(class_names):
-        # Generate synthetic images (random colors representing different species)
-        for i in range(n_samples_per_class):
-            # Create a synthetic image with class-specific color pattern
-            np.random.seed(class_idx * 1000 + i)
-            base_color = np.random.randint(0, 255, size=3)
-            img_array = np.random.randint(
-                max(0, base_color - 50),
-                min(255, base_color + 50),
-                size=(img_size, img_size, 3),
-                dtype=np.uint8
-            )
-            img = Image.fromarray(img_array).convert('RGB')
-
-            # 80/20 split
-            if i < n_samples_per_class * 0.8:
-                train_images.append(img)
-                train_labels.append(class_idx)
-            else:
-                test_images.append(img)
-                test_labels.append(class_idx)
-
-    print(f"Created synthetic dataset with {len(class_names)} classes")
-    print(f"Train set: {len(train_images)} images")
-    print(f"Test set: {len(test_images)} images")
-
-    return train_images, np.array(train_labels), test_images, np.array(test_labels), class_names
 
 
 def compute_metrics(eval_pred):
@@ -393,6 +421,8 @@ def train_model(
 
     # Create output directory
     os.makedirs(output_dir, exist_ok=True)
+
+    overall_start = time.time()
 
     # Download and prepare dataset
     train_images, train_labels, test_images, test_labels, class_names = \
@@ -507,24 +537,42 @@ def train_model(
         'class_names': class_names,
     }
 
-    # Save metrics
-    metrics_path = os.path.join(output_dir, 'model_metrics.json')
+    # Create timestamped model directory
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    timestamped_model_dir = os.path.join(output_dir, f'bird_classifier_{timestamp}')
+    os.makedirs(timestamped_model_dir, exist_ok=True)
+
+    # Save metrics in timestamped directory
+    metrics_path = os.path.join(timestamped_model_dir, 'model_metrics.json')
     with open(metrics_path, 'w') as f:
         json.dump(metrics, f, indent=2)
 
     print(f"\n✓ Metrics saved to {metrics_path}")
 
-    # Save the model
-    model_path = os.path.join(output_dir, 'bird_classifier')
+    # Save the model in timestamped directory
+    model_path = os.path.join(timestamped_model_dir, 'bird_classifier')
     trainer.save_model(model_path)
     processor.save_pretrained(model_path)
 
     print(f"✓ Model saved to {model_path}")
 
+    # Delete checkpoints directory if it exists (safe to delete after training complete)
+    # Note: Checkpoints folder contains intermediate epoch saves and is not needed after training
+    checkpoints_dir = os.path.join(timestamped_model_dir, 'checkpoints')
+    if os.path.exists(checkpoints_dir):
+        print(f"\n  Cleaning up checkpoints directory...")
+        shutil.rmtree(checkpoints_dir)
+        print(f"  ✓ Checkpoints directory deleted")
+
     # Print summary
     print("\n" + "=" * 60)
     print("TRAINING COMPLETE")
     print("=" * 60)
+    print(f"\n✓ Model saved with timestamp: {timestamp}")
+    print(f"  Location: {timestamped_model_dir}")
+    overall_elapsed = time.time() - overall_start
+    print(f"\nTotal training time: {overall_elapsed:.1f}s ({overall_elapsed/60:.1f} minutes)")
+    print()
     print(f"Test Accuracy: {metrics['results']['test_accuracy']:.4f}")
     print(f"Test Precision: {metrics['results']['test_precision']:.4f}")
     print(f"Test Recall: {metrics['results']['test_recall']:.4f}")

@@ -23,12 +23,30 @@ class BirdClassifier:
         Initialize the classifier with a fine-tuned model.
 
         Args:
-            model_path: Path to the fine-tuned model directory (defaults to backend/models/bird_classifier)
+            model_path: Path to the fine-tuned model directory (defaults to latest timestamped model or backward-compatible fallback)
         """
-        # Default to backend/models/bird_classifier if not specified
+        # Default to finding latest timestamped model
         if model_path is None:
             SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-            model_path = os.path.join(SCRIPT_DIR, 'models', 'bird_classifier')
+            models_dir = os.path.join(SCRIPT_DIR, 'models')
+            
+            # Look for timestamped models (bird_classifier_YYYY-MM-DD_HH-MM-SS format)
+            timestamped_models = []
+            if os.path.exists(models_dir):
+                for item in os.listdir(models_dir):
+                    if item.startswith('bird_classifier_') and len(item) > 16:
+                        item_path = os.path.join(models_dir, item)
+                        if os.path.isdir(item_path):
+                            timestamped_models.append(item)
+            
+            # Use latest timestamped model if available, otherwise fall back to non-timestamped
+            if timestamped_models:
+                timestamped_models.sort(reverse=True)  # Sort descending to get latest first
+                model_path = os.path.join(models_dir, timestamped_models[0], 'bird_classifier')
+                print(f"Found timestamped model: {timestamped_models[0]}")
+            else:
+                # Backward compatibility: fall back to non-timestamped location
+                model_path = os.path.join(models_dir, 'bird_classifier')
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         print(f"Using device: {self.device}")

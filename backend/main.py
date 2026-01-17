@@ -4,7 +4,6 @@ Provides REST APIs for image upload, bird classification, and image augmentation
 """
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 import io
 import base64

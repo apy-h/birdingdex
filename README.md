@@ -23,7 +23,7 @@ cd backend
 
 2. Create a virtual environment (recommended):
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
@@ -34,7 +34,7 @@ pip install -r requirements.txt
 
 4. Start the FastAPI server:
 ```bash
-python main.py
+python3 main.py
 ```
 
 The backend will be running at `http://localhost:8000`
@@ -64,7 +64,7 @@ By default, the app uses the pre-trained base Vision Transformer (`google/vit-ba
 
 ```bash
 cd backend
-python train_model.py
+python3 train_model.py
 ```
 
 The script automatically downloads the dataset via Kaggle API or falls back to direct download. See the [Development](#-development) section for Kaggle API setup and troubleshooting.
@@ -152,12 +152,12 @@ birdingdex/
 You can customize the training process with command-line arguments:
 
 ```bash
-python train_model.py \
+python3 train_model.py \
   --epochs 10 \
   --batch-size 32 \
   --learning-rate 1e-5 \
   --max-samples 200 \
-  --output-dir backend/models
+  --output-dir models
 ```
 
 **Available Options:**
@@ -196,9 +196,9 @@ Default hyperparameters:
 - **Epochs**: 5
 
 **Common training configurations**:
-- **Quick test** (CPU-friendly): `python train_model.py --epochs 1 --max-samples 20 --batch-size 4` (~10–15 min)
-- **Standard**: `python train_model.py --epochs 5 --max-samples 100 --batch-size 16` (~30–60 min on GPU, ~2 hours on CPU)
-- **High quality**: `python train_model.py --epochs 10 --max-samples 200 --batch-size 32` (~2 hours on GPU)
+- **Quick test** (CPU-friendly): `python3 train_model.py --epochs 1 --max-samples 20 --batch-size 4`
+- **Standard**: `python3 train_model.py --epochs 5 --max-samples 100 --batch-size 16` (~9 hours on CPU)
+- **High quality**: `python3 train_model.py --epochs 10 --max-samples 200 --batch-size 32`
 
 ##### 4. Evaluation Metrics
 
