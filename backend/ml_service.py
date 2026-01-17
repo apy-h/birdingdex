@@ -184,13 +184,14 @@ class BirdClassifier:
         """
         import json
 
-        # TODO: check train_model to see where model metrics are being stored to be sure you're getting it from the right place
-        # Look for metrics file at backend/models/model_metrics.json or in same directory as model
-        metrics_path = os.path.join(os.path.dirname(os.path.dirname(self.model_path)), 'model_metrics.json')
+        # Look for metrics file in the timestamped model directory (one level up from model_path)
+        # Structure: models/bird_classifier_YYYY-MM-DD_HH-MM-SS/model_metrics.json
+        #           models/bird_classifier_YYYY-MM-DD_HH-MM-SS/bird_classifier/ <- model_path
+        metrics_path = os.path.join(os.path.dirname(self.model_path), 'model_metrics.json')
 
-        # Fallback to looking in the model directory itself
+        # Fallback to old location for backward compatibility (models/model_metrics.json)
         if not os.path.exists(metrics_path):
-            metrics_path = os.path.join(self.model_path, 'model_metrics.json')
+            metrics_path = os.path.join(os.path.dirname(os.path.dirname(self.model_path)), 'model_metrics.json')
 
         try:
             if os.path.exists(metrics_path):
