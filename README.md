@@ -259,10 +259,29 @@ Contains:
 - `HF_HOME` optional HuggingFace cache path
 - `CUDA_VISIBLE_DEVICES` if using CUDA-capable GPU
 
+
+**Testing**:
+```bash
+curl http://localhost:8000/health
+curl -X POST -F "file=@test_bird.jpg" http://localhost:8000/api/classify
+curl http://localhost:8000/api/model/metrics
+```
+
+**Configuration**:
+- Runs on port 8000 by default
+- CORS enabled for localhost:3000 and localhost:5173
+- Models use CUDA if available, otherwise CPU
+
 **Performance notes**:
 - GPU (NVIDIA + CUDA) provides 5–10× speedup over CPU
 - Reduce `--batch-size` or `--max-samples` if running out of memory
 - Training time grows with dataset size and epochs
+
+**Troubleshooting**:
+- **Kaggle**: export `KAGGLE_API_TOKEN=...` or create `~/.kaggle/kaggle.json`, then rerun training
+- **Download fails**: script falls back to direct download automatically
+- **Memory issues**: reduce `--batch-size` or `--max-samples`
+- **Model not loading**: verify training completed and model exists at `backend/models/bird_classifier/`
 
 ### Frontend
 
@@ -278,32 +297,10 @@ Outputs to `frontend/dist/`.
 **UI**:
 - `ModelStats` component pulls `/api/model/metrics` to display accuracy/loss and per-class stats
 
-### Testing
+**Testing**:
+- open `http://localhost:3000`, upload an image, verify classification and model stats.
 
-**Backend**:
-```bash
-curl http://localhost:8000/health
-curl -X POST -F "file=@test_bird.jpg" http://localhost:8000/api/classify
-curl http://localhost:8000/api/model/metrics
-```
-
-**Frontend**: open `http://localhost:3000`, upload an image, verify classification and model stats.
-
-### Troubleshooting
-
-- **Kaggle**: export `KAGGLE_API_TOKEN=...` or create `~/.kaggle/kaggle.json`, then rerun training
-- **Download fails**: script falls back to direct download automatically
-- **Memory issues**: reduce `--batch-size` or `--max-samples`
-- **Model not loading**: verify training completed and model exists at `backend/models/bird_classifier/`
-
-### Configuration
-
-#### Backend
-- Runs on port 8000 by default
-- CORS enabled for localhost:3000 and localhost:5173
-- Models use CUDA if available, otherwise CPU
-
-#### Frontend
+**Configuration**:
 - Development server on port 3000
 - API proxy configured in vite.config.ts
 - TypeScript strict mode enabled
