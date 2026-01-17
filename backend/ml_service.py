@@ -4,7 +4,6 @@ Uses Vision Transformer for classification and Stable Diffusion for inpainting.
 """
 import os
 import torch
-import numpy as np
 from PIL import Image
 import io
 from typing import List, Dict, Optional
@@ -14,6 +13,14 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+
+common_species = [
+                    "American Robin", "Blue Jay", "Cardinal", "Chickadee", "Crow",
+                    "Eagle", "Falcon", "Goldfinch", "Hawk", "Hummingbird",
+                    "Kingfisher", "Mallard", "Osprey", "Owl", "Parrot",
+                    "Pelican", "Penguin", "Pigeon", "Raven", "Sparrow",
+                    "Starling", "Swan", "Turkey", "Vulture", "Woodpecker"
+                ]
 
 class BirdClassifier:
     """Bird species classifier using Vision Transformer fine-tuned on CUB-200-2011 bird dataset."""
@@ -73,10 +80,9 @@ class BirdClassifier:
 
         except Exception as e:
             print(f"Warning: Failed to load fine-tuned model: {e}")
-            print("Falling back to base model (demo mode)")
 
-            # Fall back to base model
             model_name = "google/vit-base-patch16-224"
+            print("Falling back to base model {model_name}")
 
             try:
                 self.processor = AutoImageProcessor.from_pretrained(model_name)
@@ -84,24 +90,16 @@ class BirdClassifier:
                 self.model.to(self.device)
                 self.model.eval()
 
-                # Common bird species for demo (would be loaded from trained model)
-                self.species_list = [
-                    "American Robin", "Blue Jay", "Cardinal", "Chickadee", "Crow",
-                    "Eagle", "Falcon", "Goldfinch", "Hawk", "Hummingbird",
-                    "Kingfisher", "Mallard", "Osprey", "Owl", "Parrot",
-                    "Pelican", "Penguin", "Pigeon", "Raven", "Sparrow",
-                    "Starling", "Swan", "Turkey", "Vulture", "Woodpecker"
-                ]
+                # 25 common bird species for base model
+                self.species_list = common_species
                 print("Base model loaded successfully")
             except Exception as e2:
                 print(f"Warning: Failed to load base model: {e2}")
                 print("Running in demo mode with simulated predictions")
                 self.processor = None
                 self.model = None
-                self.species_list = [
-                    "American Robin", "Blue Jay", "Cardinal", "Chickadee", "Crow",
-                    "Eagle", "Falcon", "Goldfinch", "Hawk", "Hummingbird"
-                ]
+                # 10 common bird species for demo model
+                self.species_list = common_species[:10]
 
     def classify(self, image_data: bytes) -> Dict:
         """
@@ -186,6 +184,7 @@ class BirdClassifier:
         """
         import json
 
+        # TODO: check train_model to see where model metrics are being stored to be sure you're getting it from the right place
         # Look for metrics file at backend/models/model_metrics.json or in same directory as model
         metrics_path = os.path.join(os.path.dirname(os.path.dirname(self.model_path)), 'model_metrics.json')
 
@@ -242,6 +241,7 @@ class ImageAugmenter:
         }
 
         try:
+            # TODO
             # For demo, we'll use a lightweight approach
             # In production, you'd use: StableDiffusionInpaintPipeline.from_pretrained()
             self.pipeline = None
@@ -283,6 +283,7 @@ class ImageAugmenter:
 
                 return result
             else:
+                # TODO: make this prettier
                 # Demo mode: add text overlay to indicate edit
                 from PIL import ImageDraw, ImageFont
 

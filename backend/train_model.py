@@ -8,6 +8,8 @@ This script:
 5. Saves the fine-tuned model for inference
 """
 
+print("Starting training script... loading libraries (this can take a few seconds)...", flush=True)
+
 import os
 import json
 import time
@@ -268,15 +270,25 @@ def train_model(
     # Delete checkpoint directories if they exist (safe to delete after training complete)
     # Note: Checkpoint folders contain intermediate epoch saves and are not needed after final model is saved
     print(f"\nCleaning up checkpoint directories...")
+    checkpoints_root = os.path.join(output_dir, 'checkpoints')
     checkpoint_count = 0
-    for item in os.listdir(output_dir):
-        item_path = os.path.join(output_dir, item)
-        if os.path.isdir(item_path) and item.startswith('checkpoint-'):
-            try:
-                shutil.rmtree(item_path)
-                checkpoint_count += 1
-            except Exception as e:
-                print(f"  Warning: Failed to delete {item}: {e}")
+
+    if os.path.isdir(checkpoints_root):
+        for item in os.listdir(checkpoints_root):
+            item_path = os.path.join(checkpoints_root, item)
+            if os.path.isdir(item_path) and item.startswith('checkpoint-'):
+                try:
+                    shutil.rmtree(item_path)
+                    checkpoint_count += 1
+                except Exception as e:
+                    print(f"  Warning: Failed to delete {item}: {e}")
+
+        # Remove the empty checkpoints root if all subfolders were deleted
+        try:
+            if not os.listdir(checkpoints_root):
+                shutil.rmtree(checkpoints_root)
+        except Exception:
+            pass
 
     if checkpoint_count > 0:
         print(f"✓ Deleted {checkpoint_count} checkpoint director{'y' if checkpoint_count == 1 else 'ies'}")

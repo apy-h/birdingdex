@@ -1,7 +1,7 @@
 """Data preparation utilities for the CUB-200-2011 dataset.
 
-This module handles downloading, caching (raw and resized), balancing,
-and train/test splitting for the bird classifier pipeline.
+This module handles downloading, caching (raw JPGs and resized PKL),
+balancing, and train/test splitting for the bird classifier pipeline.
 """
 
 import os
@@ -26,7 +26,7 @@ def organize_extracted_dataset(extracted_parent_path: str, dataset_path: str) ->
     if not os.path.exists(extracted_parent_path):
         raise FileNotFoundError(f"Extraction path not found: {extracted_parent_path}")
 
-    # The extracted archive always contains a directory named 'CUB_200_2011'
+    # 'CUB_200_2011' holds desired data
     src = os.path.join(extracted_parent_path, 'CUB_200_2011')
 
     if not os.path.exists(src):
@@ -96,7 +96,7 @@ def download_via_direct(data_dir: str, dataset_path: str) -> None:
     print("\nMethod 2: Direct download from Caltech...")
     url = "https://data.caltech.edu/records/65de6-vp158/files/CUB_200_2011.tgz"
 
-    # Create a temporary extraction directory (like Kaggle does)
+    # Create a temporary extraction directory
     temp_extract_dir = os.path.join(data_dir, 'direct_download_temp')
     os.makedirs(temp_extract_dir, exist_ok=True)
 
@@ -203,16 +203,6 @@ def load_raw_images_from_disk(dataset_path: str, target_size: int = 224) -> Tupl
     return resized_images, labels_array, class_names
 
 
-def resize_images(images: List[Image.Image], target_size: int = 224) -> List[Image.Image]:
-    """Resize images to the target size."""
-    print(f"  Resizing images to {target_size}x{target_size}...")
-    resized_images: List[Image.Image] = []
-    for img in tqdm(images, desc="Resizing images"):
-        resized_images.append(img.resize((target_size, target_size)))
-    print(f"  ✓ Resized {len(resized_images)} images")
-    return resized_images
-
-
 def balance_dataset(images: List[Image.Image], labels: np.ndarray, class_names: List[str],
                     max_samples_per_class: int) -> Tuple[List[Image.Image], np.ndarray]:
     """Balance dataset by limiting samples per class."""
@@ -275,17 +265,6 @@ def load_resized_cache(cache_path: str) -> Optional[Tuple[List[Image.Image], np.
         return cache_data['images'], cache_data['labels'], cache_data['class_names']
 
 
-def load_raw_cache(cache_path: str) -> Optional[Tuple[List[Image.Image], np.ndarray, List[str]]]:
-    """Load raw cache if present."""
-    if not os.path.exists(cache_path):
-        return None
-    print("✓ Found raw images cache")
-    print(f"  Loading from: {cache_path}")
-    with open(cache_path, 'rb') as f:
-        cache_data = pickle.load(f)
-        return cache_data['images'], cache_data['labels'], cache_data['class_names']
-
-
 def save_resized_cache(cache_path: str, images: List[Image.Image], labels: np.ndarray,
                        class_names: List[str]) -> None:
     print("  Saving resized images to cache...")
@@ -334,7 +313,7 @@ def load_cub_dataset(data_dir: str, max_samples_per_class: int, target_size: int
     print(f"\n  Total images: {len(all_images)}")
     print(f"  Total classes: {len(class_names)}")
 
-    # Save sample image for verification
+    # Step 7: Save sample image for verification
     save_sample_image(all_images, all_labels, class_names, data_dir)
 
     # Step 8: Balance dataset
