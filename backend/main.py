@@ -63,7 +63,10 @@ class AugmentationRequest(BaseModel):
 
 @app.get("/")
 async def root():
-    """Root endpoint."""
+    """Serve frontend index if built; otherwise return API info."""
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
     return {"message": "Welcome to Birdingdex API", "version": "1.0.0"}
 
 
@@ -204,6 +207,7 @@ async def get_model_metrics():
 # Serve static frontend files
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "dist")
 if os.path.exists(STATIC_DIR):
+    # Serve assets (e.g., /assets/*) from Vite build output
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
 else:
     print(f"Warning: Static directory not found at {STATIC_DIR}. Frontend will not be served.")
