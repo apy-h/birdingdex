@@ -318,9 +318,7 @@ class ImageAugmenter:
 
                 try:
                     print(f"Starting inference with 5 steps (fast mode)...")
-                    # Generate inpainted image with speed optimizations:
-                    # - 5 steps instead of 10 (2x faster, still decent quality)
-                    # - Lower guidance scale (5.0 instead of 7.5) = faster + slightly more creative
+                    # Generate inpainted image with speed optimizations
                     with torch.no_grad():
                         result = self.pipeline(
                             prompt=prompt,
