@@ -144,32 +144,34 @@ const BirdDetailModal: React.FC<BirdDetailModalProps> = ({ bird, isOpen, onClose
             )}
 
             <div className="augmentation-section">
-              <div className="augment-buttons">
-                <button
-                  onClick={() => handleAugment('hat')}
-                  disabled={isAugmenting || hasAugmentedImages}
-                  className="augment-btn"
-                  title="Add a hat to the bird"
-                >
-                  🎩 Hat
-                </button>
-                <button
-                  onClick={() => handleAugment('bowtie')}
-                  disabled={isAugmenting || hasAugmentedImages}
-                  className="augment-btn"
-                  title="Add a bowtie to the bird"
-                >
-                  🎀 Bowtie
-                </button>
-                <button
-                  onClick={() => handleAugment('glasses')}
-                  disabled={isAugmenting || hasAugmentedImages}
-                  className="augment-btn"
-                  title="Add glasses to the bird"
-                >
-                  🕶️ Glasses
-                </button>
-              </div>
+              {!hasAugmentedImages && (
+                <div className="augment-buttons">
+                  <button
+                    onClick={() => handleAugment('hat')}
+                    disabled={isAugmenting}
+                    className="augment-btn"
+                    title="Add a hat to the bird"
+                  >
+                    🎩 Hat
+                  </button>
+                  <button
+                    onClick={() => handleAugment('bowtie')}
+                    disabled={isAugmenting}
+                    className="augment-btn"
+                    title="Add a bowtie to the bird"
+                  >
+                    🎀 Bowtie
+                  </button>
+                  <button
+                    onClick={() => handleAugment('glasses')}
+                    disabled={isAugmenting}
+                    className="augment-btn"
+                    title="Add glasses to the bird"
+                  >
+                    🕶️ Glasses
+                  </button>
+                </div>
+              )}
 
               {hasAugmentedImages && (
                 <button
@@ -178,6 +180,13 @@ const BirdDetailModal: React.FC<BirdDetailModalProps> = ({ bird, isOpen, onClose
                 >
                   {showAugmented[currentImageIndex] ? 'Show Original' : 'Show Augmented'}
                 </button>
+              )}
+              
+              {isAugmenting && (
+                <div className="augmenting-indicator">
+                  <div className="spinner-small"></div>
+                  <p>Applying magic...</p>
+                </div>
               )}
             </div>
 

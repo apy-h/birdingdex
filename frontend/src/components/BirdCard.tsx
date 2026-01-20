@@ -99,29 +99,31 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCar
         {!compact && (
           <div className="augmentation-controls">
             <h4>Add Accessories:</h4>
-            <div className="augment-buttons">
-              <button
-                onClick={() => handleAugment('hat')}
-                disabled={isAugmenting || isAlreadyAugmented}
-                className="augment-btn"
-              >
-                🎩 Hat
-              </button>
-              <button
-                onClick={() => handleAugment('bowtie')}
-                disabled={isAugmenting || isAlreadyAugmented}
-                className="augment-btn"
-              >
-                🎀 Bowtie
-              </button>
-              <button
-                onClick={() => handleAugment('glasses')}
-                disabled={isAugmenting || isAlreadyAugmented}
-                className="augment-btn"
-              >
-                🕶️ Glasses
-              </button>
-            </div>
+            {!augmentedImage ? (
+              <div className="augment-buttons">
+                <button
+                  onClick={() => handleAugment('hat')}
+                  disabled={isAugmenting}
+                  className="augment-btn"
+                >
+                  🎩 Hat
+                </button>
+                <button
+                  onClick={() => handleAugment('bowtie')}
+                  disabled={isAugmenting}
+                  className="augment-btn"
+                >
+                  🎀 Bowtie
+                </button>
+                <button
+                  onClick={() => handleAugment('glasses')}
+                  disabled={isAugmenting}
+                  className="augment-btn"
+                >
+                  🕶️ Glasses
+                </button>
+              </div>
+            ) : null}
             {augmentedImage && (
               <button
                 onClick={() => setShowAugmented(!showAugmented)}

@@ -281,7 +281,7 @@ class ImageAugmenter:
             print("Falling back to demo mode (text overlay only)")
             self.pipeline = None
 
-    def apply_edit(self, image_data: bytes, edit_type: str, custom_prompt: Optional[str] = None) -> Image.Image:
+    def apply_edit(self, image_data: bytes, edit_type: str, custom_prompt: Optional[str] = None, mask_data: Optional[bytes] = None) -> Image.Image:
         """
         Apply cosmetic edit to image using inpainting.
 
@@ -289,6 +289,7 @@ class ImageAugmenter:
             image_data: Raw image bytes
             edit_type: Type of edit to apply
             custom_prompt: Optional custom prompt
+            mask_data: Optional user-drawn mask as image bytes (white=inpaint, black=keep)
 
         Returns:
             Augmented PIL Image
@@ -303,67 +304,91 @@ class ImageAugmenter:
                 prompt = custom_prompt or self.edit_prompts.get(edit_type, f"a bird with {edit_type}")
                 print(f"Inpainting with prompt: {prompt}")
 
-                # Resize image to 512x512 for Stable Diffusion (must be multiple of 8)
-                image_resized = image.resize((512, 512), Image.LANCZOS)
-                print(f"✓ Resized image to: {image_resized.size}")
-
-                # Create a mask for the top portion of the image (for accessories like hats, crowns, etc)
-                # White (255) = inpaint, Black (0) = keep original
-                mask = Image.new("L", (512, 512), 0)  # Start with all black (keep original)
-
-                # For accessories on top, mask the top 40% of the image
-                mask_draw = ImageDraw.Draw(mask)
-                mask_draw.rectangle([0, 0, 512, int(512 * 0.4)], fill=255)  # White for top portion
-                print(f"✓ Created mask: {mask.size}")
+                # Use user-drawn mask if provided, otherwise create default mask
+                if mask_data:
+                    print("Using user-drawn mask")
+                    mask = Image.open(io.BytesIO(mask_data)).convert("L")
+                    # Ensure mask is same size as image
+                    if mask.size != image.size:
+                        mask = mask.resize(image.size, Image.LANCZOS)
+                else:
+                    # Create a mask for the top portion of the image (for accessories like hats, crowns, etc)
+                    # White (255) = inpaint, Black (0) = keep original
+                    mask = Image.new("L", image.size, 0)  # Start with all black (keep original)
+                    
+                    # For accessories on top, mask the top 40% of the image
+                    mask_draw = ImageDraw.Draw(mask)
+                    mask_draw.rectangle([0, 0, image.size[0], int(image.size[1] * 0.4)], fill=255)  # White for top portion
+                    print(f"✓ Created default mask: {mask.size}")
 
                 try:
-                    print(f"Starting inference with 1 steps (super fast mode)...")
+                    print(f"Starting inference with 20 steps...")
                     # Generate inpainted image with speed optimizations
                     with torch.no_grad():
                         result = self.pipeline(
                             prompt=prompt,
-                            image=image_resized,
+                            image=image,
                             mask_image=mask,
-                            num_inference_steps=1, # FIXME
-                            guidance_scale=5.0,
-                            height=512,
-                            width=512,
+                            num_inference_steps=20,  # Increased from 1 for better quality
+                            guidance_scale=7.5,
+                            height=image.size[1],
+                            width=image.size[0],
                         ).images[0]
 
                     print(f"✓ Inference complete. Output size: {result.size}")
                     return result
                 except Exception as inference_error:
                     print(f"❌ Inference failed: {inference_error}")
-                    print(f"Image dtype: {type(image_resized)}, size: {image_resized.size}")
+                    print(f"Image dtype: {type(image)}, size: {image.size}")
                     print(f"Mask dtype: {type(mask)}, size: {mask.size}")
                     raise
             else:
-                # FIXME
-                # Demo mode: add text overlay to indicate edit
-                from PIL import ImageFont
-
+                # Fallback mode: overlay image instead of text
+                import urllib.request
+                from PIL import ImageOps
+                
                 result_image = image.copy()
+                
+                # Map edit types to image files
+                overlay_files = {
+                    "hat": "/logo.png",  # Temporarily using logo, will use hat.svg
+                    "bowtie": "/logo.png",  # Temporarily using logo, will use bowtie.svg
+                    "glasses": "/logo.png",  # Temporarily using logo, will use glasses.svg
+                }
+                
+                # For now, just add a simple overlay indicator
+                # In production, would load actual SVG/PNG files
                 draw = ImageDraw.Draw(result_image)
-
-                # Add text overlay
+                
+                # Add a decorative banner
+                banner_height = 60
+                banner_rect = [0, 0, result_image.width, banner_height]
+                
+                # Create semi-transparent overlay effect
+                overlay = Image.new('RGBA', result_image.size, (255, 182, 193, 180))
+                overlay_draw = ImageDraw.Draw(overlay)
+                overlay_draw.rectangle([0, 0, result_image.width, banner_height], fill=(255, 182, 193, 200))
+                
+                # Composite the overlay
+                result_image = result_image.convert('RGBA')
+                result_image = Image.alpha_composite(result_image, overlay)
+                result_image = result_image.convert('RGB')
+                
+                # Add text on the banner
+                draw = ImageDraw.Draw(result_image)
                 text = f"✨ {edit_type.upper()} ✨"
-
+                
                 # Calculate text position (centered at top)
                 bbox = draw.textbbox((0, 0), text)
                 text_width = bbox[2] - bbox[0]
-                text_height = bbox[3] - bbox[1]
-
+                
                 x = (result_image.width - text_width) // 2
                 y = 20
-
-                # Draw text with background
-                padding = 10
-                draw.rectangle(
-                    [x - padding, y - padding, x + text_width + padding, y + text_height + padding],
-                    fill=(255, 182, 193)
-                )
+                
+                # Draw text
                 draw.text((x, y), text, fill=(75, 0, 130))
-
+                
+                print(f"✓ Applied fallback overlay for {edit_type}")
                 return result_image
         except Exception as e:
             print(f"❌ Augmentation error: {str(e)}")

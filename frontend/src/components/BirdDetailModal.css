@@ -150,6 +150,36 @@
   margin: 15px 0;
 }
 
+.augmenting-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px;
+  background: var(--overlay-white-opaque);
+  border-radius: 8px;
+}
+
+.spinner-small {
+  border: 3px solid var(--spinner-bg);
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.augmenting-indicator p {
+  margin: 0;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
 .augment-buttons {
   display: flex;
   gap: 8px;
