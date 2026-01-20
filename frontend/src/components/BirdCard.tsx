@@ -58,7 +58,6 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCar
 
   const augmentedImage = hasAugmentedImage ? bird.images![bird.images!.length - 1].augmentedImages![0] : null;
   const displayImage = showAugmented && augmentedImage ? augmentedImage : bird.imageUrl;
-  const isAlreadyAugmented = hasAugmentedImage;
 
   return (
     <div
