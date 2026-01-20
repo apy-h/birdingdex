@@ -15,3 +15,5 @@ pydantic==2.10.3
 tqdm==4.67.1
 # kaggle==1.6.17  # dataset download & training utilities. Commented out for runtime-only deploy
 # pandas==2.2.0   # training/analysis. Commented out to avoid source builds on Render
+# huggingface_hub # TODO: fix version and write comment its for uploading model
+# TODO: also alphabetize reqs

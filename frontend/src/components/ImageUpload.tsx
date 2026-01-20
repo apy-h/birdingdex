@@ -119,13 +119,6 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onBirdDiscovered, isAugmentin
         </div>
       )}
 
-      {isAugmenting && (
-        <div className="loading">
-          <div className="spinner"></div>
-          <p>Augmenting image... Please wait</p>
-        </div>
-      )}
-
       {error && (
         <div className="error-message">
           {error}

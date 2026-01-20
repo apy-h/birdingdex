@@ -143,6 +143,43 @@
   background-color: var(--accent-hover, #c0392b);
 }
 
+.augmentation-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.augment-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.augment-btn {
+  padding: 8px 12px;
+  background-color: var(--primary-color, #2c3e50);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.augment-btn:hover:not(:disabled) {
+  background-color: var(--primary-hover, #34495e);
+  transform: translateY(-2px);
+}
+
+.augment-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #bbb;
+}
+
 .confidence-text {
   text-align: center;
   color: #666;

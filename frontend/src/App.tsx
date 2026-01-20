@@ -85,12 +85,14 @@ const App: React.FC = () => {
     });
   };
 
-  const handleAugmentImage = (augmentedImageUrl: string) => {
-    // Add augmented image to the current bird's latest image
-    if (currentBird && currentBird.images) {
+  const handleAugmentImage = (augmentedImageUrl: string, birdSpecies?: string) => {
+    // Determine which bird to update
+    const targetBird = birdSpecies ? discoveredBirds.find(b => b.species === birdSpecies) : currentBird;
+
+    if (targetBird && targetBird.images) {
       setDiscoveredBirds(prev => {
         const updated = prev.map(bird => {
-          if (bird.species === currentBird.species && bird.images) {
+          if (bird.species === targetBird.species && bird.images) {
             // Create a new images array to avoid mutation
             const newImages = bird.images.map((img, idx) => {
               if (idx === (bird.images?.length ?? 0) - 1) {
@@ -142,13 +144,19 @@ const App: React.FC = () => {
         <nav className="nav-menu">
           <button
             className={`nav-button ${currentPage === 'home' ? 'active' : ''}`}
-            onClick={() => setCurrentPage('home')}
+            disabled={isAugmenting}
+            onClick={() => {
+              if (!isAugmenting) setCurrentPage('home');
+            }}
           >
             🏠 Home
           </button>
           <button
             className={`nav-button ${currentPage === 'stats' ? 'active' : ''}`}
-            onClick={() => setCurrentPage('stats')}
+            disabled={isAugmenting}
+            onClick={() => {
+              if (!isAugmenting) setCurrentPage('stats');
+            }}
           >
             📊 Model Stats
           </button>
@@ -207,6 +215,8 @@ const App: React.FC = () => {
         bird={selectedBirdForModal || currentBird || { species: '', confidence: 0, imageUrl: '' }}
         isOpen={selectedBirdForModal !== null}
         onClose={() => setSelectedBirdForModal(null)}
+        onAugmented={handleAugmentImage}
+        onAugmentingStateChange={setIsAugmenting}
       />
 
       <footer className="App-footer">

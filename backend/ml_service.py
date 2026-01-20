@@ -317,14 +317,14 @@ class ImageAugmenter:
                 print(f"✓ Created mask: {mask.size}")
 
                 try:
-                    print(f"Starting inference with 5 steps (fast mode)...")
+                    print(f"Starting inference with 1 steps (super fast mode)...")
                     # Generate inpainted image with speed optimizations
                     with torch.no_grad():
                         result = self.pipeline(
                             prompt=prompt,
                             image=image_resized,
                             mask_image=mask,
-                            num_inference_steps=5,
+                            num_inference_steps=1, # FIXME
                             guidance_scale=5.0,
                             height=512,
                             width=512,

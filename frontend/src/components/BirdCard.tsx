@@ -7,16 +7,24 @@ interface BirdCardProps {
   bird: Bird;
   compact?: boolean;
   onCompactCardClick?: () => void;
-  onAugmented?: (augmentedImageUrl: string) => void;
+  onAugmented?: (augmentedImageUrl: string, birdSpecies?: string) => void;
   onAugmentingStateChange?: (isAugmenting: boolean) => void;
 }
 
 const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCardClick, onAugmented, onAugmentingStateChange }) => {
   const [isAugmenting, setIsAugmenting] = useState(false);
   const [showAugmented, setShowAugmented] = useState(false);
-  const [augmentedImage, setAugmentedImage] = useState<string | null>(null);
 
   const handleAugment = async (editType: string) => {
+    // Don't allow augmentation if this image already has one
+    if (bird.images && bird.images.length > 0) {
+      const lastImage = bird.images[bird.images.length - 1];
+      if (lastImage.augmentedImages && lastImage.augmentedImages.length > 0) {
+        console.log('Image already augmented');
+        return;
+      }
+    }
+
     setIsAugmenting(true);
     onAugmentingStateChange?.(true);
     try {
@@ -24,11 +32,10 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCar
       const base64 = bird.imageUrl.split(',')[1];
       const result = await api.augmentImage(base64, editType);
       const augmentedUrl = `data:image/png;base64,${result.augmented_image}`;
-      setAugmentedImage(augmentedUrl);
       setShowAugmented(true);
-      // Notify parent component about augmented image
+
       if (onAugmented) {
-        onAugmented(augmentedUrl);
+        onAugmented(augmentedUrl, bird.species);
       }
     } catch (err) {
       console.error('Augmentation error:', err);
@@ -44,7 +51,14 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCar
     }
   };
 
+  // Check if current bird's latest image has been augmented
+  const hasAugmentedImage = bird.images && bird.images.length > 0 &&
+    bird.images[bird.images.length - 1].augmentedImages &&
+    bird.images[bird.images.length - 1].augmentedImages!.length > 0;
+
+  const augmentedImage = hasAugmentedImage ? bird.images![bird.images!.length - 1].augmentedImages![0] : null;
   const displayImage = showAugmented && augmentedImage ? augmentedImage : bird.imageUrl;
+  const isAlreadyAugmented = hasAugmentedImage;
 
   return (
     <div
@@ -88,21 +102,21 @@ const BirdCard: React.FC<BirdCardProps> = ({ bird, compact = false, onCompactCar
             <div className="augment-buttons">
               <button
                 onClick={() => handleAugment('hat')}
-                disabled={isAugmenting}
+                disabled={isAugmenting || isAlreadyAugmented}
                 className="augment-btn"
               >
                 🎩 Hat
               </button>
               <button
                 onClick={() => handleAugment('bowtie')}
-                disabled={isAugmenting}
+                disabled={isAugmenting || isAlreadyAugmented}
                 className="augment-btn"
               >
                 🎀 Bowtie
               </button>
               <button
                 onClick={() => handleAugment('glasses')}
-                disabled={isAugmenting}
+                disabled={isAugmenting || isAlreadyAugmented}
                 className="augment-btn"
               >
                 🕶️ Glasses

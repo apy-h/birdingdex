@@ -117,6 +117,17 @@ body {
   backdrop-filter: blur(10px);
 }
 
+.nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.nav-button:disabled:hover {
+  background: var(--overlay-white-light);
+  border-color: var(--overlay-white-medium);
+}
+
 .nav-button:hover {
   background: var(--overlay-white-medium);
   border-color: var(--overlay-white-bold);

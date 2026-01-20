@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { Bird, cleanBirdName } from '../types';
+import { api } from '../api';
 import './BirdDetailModal.css';
 
 interface BirdDetailModalProps {
   bird: Bird;
   isOpen: boolean;
   onClose: () => void;
+  onAugmented?: (augmentedImageUrl: string, birdSpecies?: string) => void;
+  onAugmentingStateChange?: (isAugmenting: boolean) => void;
 }
 
-const BirdDetailModal: React.FC<BirdDetailModalProps> = ({ bird, isOpen, onClose }) => {
+const BirdDetailModal: React.FC<BirdDetailModalProps> = ({ bird, isOpen, onClose, onAugmented, onAugmentingStateChange }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showAugmented, setShowAugmented] = useState<{ [key: number]: boolean }>({});
+  const [isAugmenting, setIsAugmenting] = useState(false);
 
   if (!isOpen || !bird.images || bird.images.length === 0) {
     return null;
@@ -38,6 +42,34 @@ const BirdDetailModal: React.FC<BirdDetailModalProps> = ({ bird, isOpen, onClose
 
   const goToNext = () => {
     setCurrentImageIndex(prev => (prev < images.length - 1 ? prev + 1 : 0));
+  };
+
+  const handleAugment = async (editType: string) => {
+    // Don't allow augmentation if this image already has one
+    if (currentBirdImage.augmentedImages && currentBirdImage.augmentedImages.length > 0) {
+      console.log('Image already augmented');
+      return;
+    }
+
+    setIsAugmenting(true);
+    onAugmentingStateChange?.(true);
+    try {
+      // Extract base64 from data URL
+      const base64 = currentBirdImage.imageUrl.split(',')[1];
+      const result = await api.augmentImage(base64, editType);
+      const augmentedUrl = `data:image/png;base64,${result.augmented_image}`;
+      setShowAugmented(prev => ({ ...prev, [currentImageIndex]: true }));
+
+      // Notify parent component about augmented image
+      if (onAugmented) {
+        onAugmented(augmentedUrl, bird.species);
+      }
+    } catch (err) {
+      console.error('Augmentation error:', err);
+    } finally {
+      setIsAugmenting(false);
+      onAugmentingStateChange?.(false);
+    }
   };
 
   return (
@@ -111,14 +143,43 @@ const BirdDetailModal: React.FC<BirdDetailModalProps> = ({ bird, isOpen, onClose
               </div>
             )}
 
-            {hasAugmentedImages && (
-              <button
-                onClick={() => toggleAugmented(currentImageIndex)}
-                className="augmented-toggle-btn"
-              >
-                {showAugmented[currentImageIndex] ? 'Show Original' : 'Show Augmented'}
-              </button>
-            )}
+            <div className="augmentation-section">
+              <div className="augment-buttons">
+                <button
+                  onClick={() => handleAugment('hat')}
+                  disabled={isAugmenting || hasAugmentedImages}
+                  className="augment-btn"
+                  title="Add a hat to the bird"
+                >
+                  🎩 Hat
+                </button>
+                <button
+                  onClick={() => handleAugment('bowtie')}
+                  disabled={isAugmenting || hasAugmentedImages}
+                  className="augment-btn"
+                  title="Add a bowtie to the bird"
+                >
+                  🎀 Bowtie
+                </button>
+                <button
+                  onClick={() => handleAugment('glasses')}
+                  disabled={isAugmenting || hasAugmentedImages}
+                  className="augment-btn"
+                  title="Add glasses to the bird"
+                >
+                  🕶️ Glasses
+                </button>
+              </div>
+
+              {hasAugmentedImages && (
+                <button
+                  onClick={() => toggleAugmented(currentImageIndex)}
+                  className="augmented-toggle-btn"
+                >
+                  {showAugmented[currentImageIndex] ? 'Show Original' : 'Show Augmented'}
+                </button>
+              )}
+            </div>
 
             <p className="confidence-text">
               Confidence: {(currentBirdImage.confidence * 100).toFixed(1)}%
