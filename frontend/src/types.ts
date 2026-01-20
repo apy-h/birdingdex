@@ -16,7 +16,6 @@ export interface Bird {
     species: string;
     confidence: number;
   }[];
-  augmentedImageUrl?: string;
   // For collection view with multiple images per species
   images?: BirdImage[];
 }

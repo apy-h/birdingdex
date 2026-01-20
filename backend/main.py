@@ -59,6 +59,7 @@ class AugmentationRequest(BaseModel):
     image_base64: str
     edit_type: str  # "hat", "bowtie", "glasses", etc.
     prompt: Optional[str] = None
+    mask_base64: Optional[str] = None  # User-drawn mask (white=inpaint, black=keep)
 
 
 @app.get("/")
@@ -114,6 +115,11 @@ async def augment_image(request: AugmentationRequest):
     try:
         # Decode base64 image
         image_bytes = base64.b64decode(request.image_base64)
+        
+        # Decode mask if provided
+        mask_bytes = None
+        if request.mask_base64:
+            mask_bytes = base64.b64decode(request.mask_base64)
 
         # Get augmenter and apply edit
         augmenter = get_image_augmenter()
@@ -121,7 +127,8 @@ async def augment_image(request: AugmentationRequest):
         augmented_image = augmenter.apply_edit(
             image_bytes,
             request.edit_type,
-            request.prompt
+            request.prompt,
+            mask_bytes
         )
 
         # Encode result as base64

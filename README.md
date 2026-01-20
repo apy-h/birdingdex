@@ -105,13 +105,14 @@ The script automatically downloads the dataset via Kaggle API or falls back to d
 - `GET /health` - Health check
 - `GET /api/species` - Get list of all supported bird species
 - `GET /api/model/metrics` - Get model training metrics and performance stats
+- **Swagger Docs**: `http://localhost:8000/docs` - Interactive API documentation
 
 ### Bird Classification
 - `POST /api/upload` - Upload and validate an image
 - `POST /api/classify` - Classify bird species from image
 
 ### Image Augmentation
-- `POST /api/augment` - Apply cosmetic edits to bird images
+- `POST /api/augment` - Apply cosmetic edits to bird images (supports custom masks)
 
 ## 📁 Project Structure
 
@@ -121,25 +122,47 @@ birdingdex/
 │   ├── main.py              # FastAPI application
 │   ├── ml_service.py        # ML models and inference
 │   ├── train_model.py       # Model fine-tuning script
+│   ├── prep_data.py         # Data preparation utilities
 │   ├── requirements.txt     # Python dependencies
-│   └── models/              # Saved models directory
-│       ├── bird_classifier/ # Fine-tuned model
-│       └── model_metrics.json
+│   ├── models/              # Saved models directory
+│   │   ├── bird_classifier/ # Fine-tuned model (or timestamped versions)
+│   │   └── model_metrics.json
+│   ├── dataset/             # Downloaded dataset (gitignored)
+│   ├── tests/               # Backend tests
+│   └── venv/                # Virtual environment (gitignored)
 ├── frontend/
 │   ├── src/
 │   │   ├── components/      # React components
 │   │   │   ├── ImageUpload.tsx
+│   │   │   ├── ImageUpload.css
 │   │   │   ├── BirdCard.tsx
+│   │   │   ├── BirdCard.css
+│   │   │   ├── BirdDetailModal.tsx
+│   │   │   ├── BirdDetailModal.css
 │   │   │   ├── CollectionProgress.tsx
-│   │   │   └── ModelStats.tsx
+│   │   │   ├── CollectionProgress.css
+│   │   │   ├── ModelStats.tsx
+│   │   │   └── ModelStats.css
 │   │   ├── App.tsx          # Main app component
+│   │   ├── App.css          # Global styles with CSS variables
 │   │   ├── api.ts           # API client
 │   │   ├── types.ts         # TypeScript types
+│   │   ├── index.css        # Base styles
 │   │   └── main.tsx         # Entry point
+│   ├── public/
+│   │   ├── logo.png
+│   │   ├── hat.svg          # Augmentation overlay
+│   │   ├── bowtie.svg       # Augmentation overlay
+│   │   └── glasses.svg      # Augmentation overlay
+│   ├── dist/                # Build output (gitignored)
+│   ├── node_modules/        # Dependencies (gitignored)
 │   ├── index.html
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── tsconfig.json
+├── test_images/             # Sample test images
+├── build.sh                 # Render deployment build script
+├── start.sh                 # Quick start script for local development
 └── README.md
 ```
 
@@ -155,9 +178,11 @@ You can customize the training process with command-line arguments:
 python3 train_model.py \
   --epochs 10 \
   --batch-size 32 \
-  --learning-rate 1e-5 \
+  --learning-rate 2e-5 \
   --max-samples 200 \
-  --output-dir models
+  --image-size 224 \
+  --output-dir models \
+  --no-cuda
 ```
 
 **Available Options:**
@@ -165,7 +190,9 @@ python3 train_model.py \
 - `--batch-size`: Batch size for training (default: 16)
 - `--learning-rate`: Learning rate (default: 2e-5)
 - `--max-samples`: Max samples per class for faster training (default: 100)
+- `--image-size`: Image size for resizing (default: 224)
 - `--output-dir`: Directory to save the model (default: backend/models)
+- `--no-cuda`: Force CPU usage, skip CUDA availability check
 
 #### Training Process
 
@@ -199,6 +226,7 @@ Default hyperparameters:
 - **Quick test** (CPU-friendly): `python3 train_model.py --epochs 1 --max-samples 20 --batch-size 4`
 - **Standard**: `python3 train_model.py --epochs 5 --max-samples 100 --batch-size 16` (~9 hours on CPU)
 - **High quality**: `python3 train_model.py --epochs 10 --max-samples 200 --batch-size 32`
+- **CPU only**: Add `--no-cuda` to any command to force CPU usage
 
 ##### 4. Evaluation Metrics
 
@@ -257,6 +285,7 @@ Contains:
 **Testing**:
 ```bash
 curl http://localhost:8000/health
+curl http://localhost:8000/docs  # View Swagger API documentation
 curl -X POST -F "file=@test_bird.jpg" http://localhost:8000/api/classify
 curl http://localhost:8000/api/model/metrics
 ```
@@ -265,6 +294,7 @@ curl http://localhost:8000/api/model/metrics
 - Runs on port 8000 by default
 - CORS enabled for localhost:3000 and localhost:5173
 - Models use CUDA if available, otherwise CPU
+- Swagger docs available at http://localhost:8000/docs
 
 **Performance notes**:
 - GPU (NVIDIA + CUDA) provides 5–10× speedup over CPU
@@ -295,6 +325,6 @@ Outputs to `frontend/dist/`.
 - open `http://localhost:3000`, upload an image, verify classification and model stats.
 
 **Configuration**:
-- Development server on port 3000
+- Development server on port 3000 (configured in vite.config.ts)
 - API proxy configured in vite.config.ts
 - TypeScript strict mode enabled

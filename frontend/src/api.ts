@@ -6,6 +6,31 @@ const envUrl = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined
 const isProd = typeof window !== 'undefined' && !window.location.host.includes('localhost');
 const API_BASE_URL = isProd ? '' : (envUrl || 'http://localhost:8000');
 
+// Health check for deployment - logs connection status to console
+if (typeof window !== 'undefined') {
+  const checkHealth = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/health`);
+      console.log('✅ Backend connection successful:', {
+        status: response.data.status,
+        baseUrl: API_BASE_URL,
+        isProd,
+        host: window.location.host
+      });
+    } catch (error) {
+      console.error('❌ Backend connection failed:', {
+        baseUrl: API_BASE_URL,
+        isProd,
+        host: window.location.host,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  };
+  
+  // Run health check after a short delay to ensure app is loaded
+  setTimeout(checkHealth, 1000);
+}
+
 export const api = {
   async uploadImage(file: File): Promise<UploadResponse> {
     const formData = new FormData();
