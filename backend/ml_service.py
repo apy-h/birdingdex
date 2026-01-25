@@ -281,6 +281,11 @@ class ImageAugmenter:
             print("Falling back to demo mode (text overlay only)")
             self.pipeline = None
 
+    @staticmethod
+    def _round_to_multiple_of_8(value):
+        """Round a value to the nearest multiple of 8 for Stable Diffusion compatibility."""
+        return round(value / 8) * 8
+
     def apply_edit(self, image_data: bytes, edit_type: str, custom_prompt: Optional[str] = None, mask_data: Optional[bytes] = None) -> Image.Image:
         """
         Apply cosmetic edit to image using inpainting.
@@ -315,7 +320,7 @@ class ImageAugmenter:
                     # Create a mask for the top portion of the image (for accessories like hats, crowns, etc)
                     # White (255) = inpaint, Black (0) = keep original
                     mask = Image.new("L", image.size, 0)  # Start with all black (keep original)
-                    
+
                     # For accessories on top, mask the top 40% of the image
                     mask_draw = ImageDraw.Draw(mask)
                     mask_draw.rectangle([0, 0, image.size[0], int(image.size[1] * 0.4)], fill=255)  # White for top portion
@@ -323,16 +328,26 @@ class ImageAugmenter:
 
                 try:
                     print(f"Starting inference with 20 steps...")
+                    # Round dimensions to nearest multiple of 8 for Stable Diffusion compatibility
+                    height = self._round_to_multiple_of_8(image.size[1])
+                    width = self._round_to_multiple_of_8(image.size[0])
+
+                    # Resize image and mask if needed
+                    if (width, height) != image.size:
+                        print(f"Resizing image from {image.size} to ({width}, {height})")
+                        image = image.resize((width, height), Image.LANCZOS)
+                        mask = mask.resize((width, height), Image.LANCZOS)
+
                     # Generate inpainted image with speed optimizations
                     with torch.no_grad():
                         result = self.pipeline(
                             prompt=prompt,
                             image=image,
                             mask_image=mask,
-                            num_inference_steps=20,  # Increased from 1 for better quality
+                            num_inference_steps=3,  # TODO
                             guidance_scale=7.5,
-                            height=image.size[1],
-                            width=image.size[0],
+                            height=height,
+                            width=width,
                         ).images[0]
 
                     print(f"✓ Inference complete. Output size: {result.size}")
@@ -346,48 +361,48 @@ class ImageAugmenter:
                 # Fallback mode: overlay image instead of text
                 import urllib.request
                 from PIL import ImageOps
-                
+
                 result_image = image.copy()
-                
+
                 # Map edit types to image files
                 overlay_files = {
                     "hat": "/logo.png",  # Temporarily using logo, will use hat.svg
                     "bowtie": "/logo.png",  # Temporarily using logo, will use bowtie.svg
                     "glasses": "/logo.png",  # Temporarily using logo, will use glasses.svg
                 }
-                
+
                 # For now, just add a simple overlay indicator
                 # In production, would load actual SVG/PNG files
                 draw = ImageDraw.Draw(result_image)
-                
+
                 # Add a decorative banner
                 banner_height = 60
                 banner_rect = [0, 0, result_image.width, banner_height]
-                
+
                 # Create semi-transparent overlay effect
                 overlay = Image.new('RGBA', result_image.size, (255, 182, 193, 180))
                 overlay_draw = ImageDraw.Draw(overlay)
                 overlay_draw.rectangle([0, 0, result_image.width, banner_height], fill=(255, 182, 193, 200))
-                
+
                 # Composite the overlay
                 result_image = result_image.convert('RGBA')
                 result_image = Image.alpha_composite(result_image, overlay)
                 result_image = result_image.convert('RGB')
-                
+
                 # Add text on the banner
                 draw = ImageDraw.Draw(result_image)
                 text = f"✨ {edit_type.upper()} ✨"
-                
+
                 # Calculate text position (centered at top)
                 bbox = draw.textbbox((0, 0), text)
                 text_width = bbox[2] - bbox[0]
-                
+
                 x = (result_image.width - text_width) // 2
                 y = 20
-                
+
                 # Draw text
                 draw.text((x, y), text, fill=(75, 0, 130))
-                
+
                 print(f"✓ Applied fallback overlay for {edit_type}")
                 return result_image
         except Exception as e:
